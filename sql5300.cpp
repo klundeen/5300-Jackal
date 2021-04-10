@@ -25,15 +25,50 @@ using namespace std;
 
 
 
+// TODO: need to complete the code for some other cases and implement convertOperatorToStr()
+/**
+ * Convert Expression to string
+ * @expr expr   expression to be converted
+ * @return      SQL version of *expr
+ */
+string convertExpressionToStr(const Expr *expr) {
+    string res;
 
+    switch (expr->type) {
+        case kExprLiteralFloat:
+            res += to_string(expr->fval);
+            break;
+        case kExprLiteralString:
+            res += expr->name;
+            break;
+        case kExprLiteralInt:
+            res += to_string(expr->ival);
+            break;
+        case kExprStar:
+            res += "*";
+            break;
+        // TODO: not sure how to handle below case
+//        case kExprPlaceholder:
+//            res += "?";
+//            break;
+//        case kExprColumnRef:
+         case kExprFunctionRef:
+             res += string(expr->name) + "?" + expr->expr->name;
+             break;
+         case kExprOperator:
+             res += convertOperatorToStr(expr);
+             break;
+         default:
+            ret += "UNKNOWN EXPRESSION";
+            break;
+    }
 
+    if (expr->alias != NULL) {
+        res += " AS " + expr->alias;
+    }
 
-
-
-
-
-
-
+    return res;
+}
 
 // TODO: implement utility function: convertColInfoToStr()
 /**
