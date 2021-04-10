@@ -23,6 +23,98 @@ exec
 using namespace hsql;
 using namespace std;
 
+
+
+
+
+
+
+
+
+
+
+
+
+// TODO: implement utility function: convertColInfoToStr()
+/**
+ * Execute a create statement
+ *
+ * @param stmt  a create statement to be executed
+ * @returns     a string representation of the SQL statement
+ */
+string executeCreate(const CreateStatement *stmt) {
+    string res = "CREATE TABLE ";
+
+    if (stmt->type != CreateStatement::kTable) {
+        return "Unsupported operation! Currently, only support create table";
+    }
+
+    // check whether the table already exists
+    if (stmt->ifNotExists) {
+        res += "IF NOT EXISTS ";
+    }
+
+    res += string(stmt->tableName) + " (";
+
+    bool addComma = false;
+
+    for (ColumnDefinition *col : *stmt->columns) {
+        if (addComma) {
+            res += ", ";
+        }
+        res += convertColInfoToStr(col);
+        addComma = true;
+    }
+
+    res += ")";
+
+    return res;
+}
+
+// TODO: implement utility function: convertExpressionToStr(), and convertTableRefInfoToStr()
+/**
+ * Execute a select statement
+ *
+ * @param stmt  a select statement to be executed
+ * @returns     a string representation of the SQL statement
+ */
+string executeSelect(const SelectStatement *stmt) {
+    string res = "SELECT ";
+    bool addComma = false;
+
+    for (Expr *expr : *stmt->selectList) {
+        if (addComma) {
+            res += ", ";
+        }
+        res += convertExpressionToStr(expr);
+        addComma = true;
+    }
+
+    res += " FROM " + convertTableRefInfoToStr(stmt->fromTable);
+    if (stmt->whereClause != NULL) {
+        res += " WHERE " + convertExpressionToStr(stmt->whereClause);
+    }
+
+    return res;
+}
+
+/**
+ * Execute a sql statement
+ *
+ * @param stmt  sql statement to be executed
+ * @returns     a string representation of the SQL statement
+ */
+string execute(const SQLStatement *stmt) {
+    switch (stmt->type()) {
+        case kStmtSelect:
+            return executeSelect((const SelectStatement *) stmt);
+        case kStmtCreate:
+            return executeCreate((const CreateStatement *) stmt);
+        default:
+            return "Not supported operation";
+    }
+}
+
 int main(int len, char* args[])
 {
     if(len != 2)
