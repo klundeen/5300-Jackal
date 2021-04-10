@@ -5,35 +5,35 @@
 #include <string>
 #include <cassert>
 #include "db_cxx.h"
+#include "SQLParser.h"
+#include "sqlhelper.h"
+#include "heap_storage.h"
 
-/*
-sqlshell
-    - create db environment if doesn't exist --> go to initialize (DB_CREATE)
-    - prompt SQL >
-    - parse
-    - function unparse
-    - print 
-exec
-    ...
-    - create table
-    - select
-*/
+// expressionToString: symbols *, ., ?,  
+
+// operatorToString: and, or, not
+
+// columnDefToString: DOUBLE, INT, TEXT
+
+// tableRefToString: join, cross
+
+// create table
+
+// select
+
+// insert
+
+// execute select/insert/create ^^^
 
 
-using namespace hsql;
+
+
+
 using namespace std;
+using namespace hsql;
 
-
-
-
-
-
-
-
-
-
-
-
+// initialize the db environment as global variable
+DbEnv *DB_ENV;
 
 // TODO: implement utility function: convertColInfoToStr()
 /**
@@ -42,7 +42,7 @@ using namespace std;
  * @param stmt  a create statement to be executed
  * @returns     a string representation of the SQL statement
  */
-string executeCreate(const CreateStatement *stmt) {
+string execCreate(const CreateStatement *stmt) {
     string res = "CREATE TABLE ";
 
     if (stmt->type != CreateStatement::kTable) {
@@ -78,7 +78,7 @@ string executeCreate(const CreateStatement *stmt) {
  * @param stmt  a select statement to be executed
  * @returns     a string representation of the SQL statement
  */
-string executeSelect(const SelectStatement *stmt) {
+string execSelect(const SelectStatement *stmt) {
     string res = "SELECT ";
     bool addComma = false;
 
@@ -99,12 +99,23 @@ string executeSelect(const SelectStatement *stmt) {
 }
 
 /**
+ * Execute a insert statement
+ *
+ * @param stmt  sql statement to be executed
+ * @returns     a string representation of the SQL statement
+ */
+string execInsert(const InsertStatement* stmt)
+{
+    return "INSERT ";
+}
+
+/**
  * Execute a sql statement
  *
  * @param stmt  sql statement to be executed
  * @returns     a string representation of the SQL statement
  */
-string execute(const SQLStatement *stmt) {
+string exec(const SQLStatement *stmt) {
     switch (stmt->type()) {
         case kStmtSelect:
             return executeSelect((const SelectStatement *) stmt);
@@ -113,6 +124,59 @@ string execute(const SQLStatement *stmt) {
         default:
             return "Not supported operation";
     }
+}
+
+/**
+ * Convert the expression into SQL statement
+ *
+ * @param stmt  an expression 
+ * @returns     an transcribed formatted SQL statement
+ */
+
+string exprToString(const Expr *expr)
+{
+    string s = "";
+    switch(expr->type)
+    {
+        case kExprOperator:
+            s += operatorExprToString(expr);
+            break;
+        case kExprColumnRef:
+            if(expr->table != NULL)
+            {
+                s += string(expr->table) + ".";
+            }
+        case kExprLiteralString:
+            s += expr->name;
+            break;
+        case kExprLiteralFloat:
+            string floatStr = to_string(expr->fval);
+            s += floatStr;
+            break;
+        case kExprFunctionRef:
+            s += string(expr->name) + "?" + expr->expr->name;
+            break;
+        case kExprLiteralInt:
+            string litStr = to_string(expr->ival);
+            break;
+        case kExprStar:
+            s += "s";
+            break;
+        default:
+            ret += "?NotRecognize?";
+            break;
+    }
+    if(expr->alias != NULL)
+    {
+        s += string(" AS ") + expr->alias;
+    }
+    return s;
+}
+
+//and, or, not
+string operatorExprToString(const Expr *expr)
+{
+
 }
 
 int main(int len, char* args[])
@@ -155,18 +219,3 @@ int main(int len, char* args[])
     return EXIT_SUCCESS;
 }
 
-// expressionToString: symbols *, ., ?,  
-
-// operatorToString: and, or, not
-
-// columnDefToString: DOUBLE, INT, TEXT
-
-// tableRefToString: join, cross
-
-// create table
-
-// select
-
-// insert
-
-// execute select/insert/create
