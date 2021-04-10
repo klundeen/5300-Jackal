@@ -15,9 +15,69 @@
 
 // columnDefToString: DOUBLE, INT, TEXT
 
-// tableRefToString: join, cross
+// forward declare
+string convertOperatorToStr(const Expr *expr);
+string convertExpressionToStr(const Expr *expr);
+string executeCreate(const CreateStatement *stmt);
+string executeSelect(const SelectStatement *stmt);
+string execute(const SQLStatement *stmt);
 
-// create table
+// TODO: below method didn't consider Ternary operators. And for unary operators, it only considers NOT so far
+/**
+ * Convert operation expression to string
+ * @param expr  operator expression to be converted
+ * @return      SQL version of operator expression
+ */
+string convertOperatorToStr(const Expr *expr) {
+    if (expr == NULL) {
+        return "null";
+    }
+
+    string res;
+
+    if (expr->opType == Expr::NOT)
+        res += "NOT ";
+
+    res += convertExpressionToStr(expr->expr) + " ";
+
+    switch (expr->opType) {
+        case Expr::SIMPLE_OP:
+            res += expr->opChar;
+            break;
+        case Expr::NOT_EQUALS:
+            res += "!=";
+            break;
+        case Expr::LESS_EQ:
+            res += "<=";
+            break;
+        case Expr::GREATER_EQ:
+            res += ">=";
+            break;
+        case Expr::LIKE:
+            res += "LIKE";
+            break;
+        case Expr::NOT_LIKE:
+            res += "NOT_LIKE";
+            break;
+        case Expr::AND:
+            res += "AND";
+            break;
+        case Expr::OR:
+            res += "OR";
+            break;
+        case Expr::IN:
+            res += "IN";
+            break;
+        default:
+            break;
+    }
+
+    if (expr->expr2 != NULL) {
+        res += " " + convertExpressionToStr(expr->expr2);
+    }
+
+    return res;
+}
 
 // select
 
@@ -40,7 +100,7 @@ DbEnv *DB_ENV;
  * Execute a create statement
  *
  * @param stmt  a create statement to be executed
- * @returns     a string representation of the SQL statement
+ * @return     a string representation of the SQL statement
  */
 string execCreate(const CreateStatement *stmt) {
     string res = "CREATE TABLE ";
@@ -76,7 +136,7 @@ string execCreate(const CreateStatement *stmt) {
  * Execute a select statement
  *
  * @param stmt  a select statement to be executed
- * @returns     a string representation of the SQL statement
+ * @return     a string representation of the SQL statement
  */
 string execSelect(const SelectStatement *stmt) {
     string res = "SELECT ";
@@ -113,7 +173,7 @@ string execInsert(const InsertStatement* stmt)
  * Execute a sql statement
  *
  * @param stmt  sql statement to be executed
- * @returns     a string representation of the SQL statement
+ * @return     a string representation of the SQL statement
  */
 string exec(const SQLStatement *stmt) {
     switch (stmt->type()) {
