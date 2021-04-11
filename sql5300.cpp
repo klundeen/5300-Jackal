@@ -283,8 +283,8 @@ string tableReftoString(const TableRef *t)
  */
 string colDefToStr(const ColumnDefinition* cd)
 {
-    string s(col->name);
-    switch (col->type)
+    string s(cd->name);
+    switch (cd->type)
     {
         case ColumnDefinition::INT:
             s += " INT";
@@ -319,7 +319,7 @@ int main(int len, char* args[])
 	env.set_error_stream(&cerr);
 	env.open(directory, DB_CREATE | DB_INIT_MPOOL, 0);
 
-    _DB_ENV = &env; //assign to the global var
+    DB_ENV = &env; //assign to the global var
     
     while (true)
     {
