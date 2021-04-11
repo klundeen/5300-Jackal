@@ -10,9 +10,6 @@
 using namespace std;
 using namespace hsql;
 
-// initialize the db environment as global variable
-DbEnv *DB_ENV;
-
 
 // forward declare
 string convertOperatorToStr(const Expr *expr);
@@ -240,7 +237,7 @@ string tableReftoString(const TableRef *t)
             switch(t->join->type)
             {
                 case kJoinInner:
-                    s += " JOIN "
+                    s += " JOIN ";
                     break;
                 case kJoinLeft:
                     s += "LEFT JOIN ";
@@ -319,7 +316,6 @@ int main(int len, char* args[])
 	env.set_error_stream(&cerr);
 	env.open(directory, DB_CREATE | DB_INIT_MPOOL, 0);
 
-    DB_ENV = &env; //assign to the global var
     
     while (true)
     {
