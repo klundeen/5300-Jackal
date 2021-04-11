@@ -6,16 +6,13 @@
 #include <cassert>
 #include "db_cxx.h"
 #include "SQLParser.h"
-#include "sqlhelper.h"
-#include "heap_storage.h"
 
 using namespace std;
 using namespace hsql;
-// expressionToString: symbols *, ., ?,  
 
-// operatorToString: and, or, not
+// initialize the db environment as global variable
+DbEnv *DB_ENV;
 
-// columnDefToString: DOUBLE, INT, TEXT
 
 // forward declare
 string convertOperatorToStr(const Expr *expr);
@@ -25,9 +22,6 @@ string executeSelect(const SelectStatement *stmt);
 string execute(const SQLStatement *stmt);
 string tableReftoString(const TableRef *table);
 string colDefToStr(const ColumnDefinition* cd);
-
-
-
 
 
 // TODO: below method didn't consider Ternary operators. And for unary operators, it only considers NOT so far
@@ -92,8 +86,7 @@ string convertOperatorToStr(const Expr *expr) {
 
 
 
-// initialize the db environment as global variable
-DbEnv *DB_ENV;
+
 
 // TODO: implement utility function: convertColInfoToStr()
 /**
@@ -326,15 +319,14 @@ int main(int len, char* args[])
         return 1;
     }
 
-    // need to check db existance?
+    // create a BerkDB environment
     char* directory = args[1];
-    cout << "sql5300 BerkDB environment at" << directory << endl;
+    cout << "sql5300 BerkDB environment is at" << directory << endl;
 
     DbEnv env(0U);
-	env.set_message_stream(&std::cout);
-	env.set_error_stream(&std::cerr);
-    // try catch?
-	env.open(envdir.c_str(), DB_CREATE | DB_INIT_MPOOL, 0);
+	env.set_message_stream(&cout);
+	env.set_error_stream(&cerr);
+	env.open(directory, DB_CREATE | DB_INIT_MPOOL, 0);
 
     _DB_ENV = &env;
    
@@ -346,13 +338,26 @@ int main(int len, char* args[])
         cin >> query;
         cout << endl;
 
-        // query with nothing
         if(query.length() == 0) 
             continue; 
         if(query == "quit")
-            break:
-        // test?
+            break;
 
+        // parse
+        SQLParserResult *pr = SQLParser::parseSQLString(query);
+        if(!pr->isValid())
+        {
+            cout << "INVALID SQL: " << query << endl;
+            cout << "Please enter a valid SQL query!" << endl;
+            delete pr;
+            continue;
+        }
+        cout << "parse ok!" << endl;
+        for(uint i = 0; i < pr->size(); i++)
+        {
+            cout << exec(pr->getStatement(i))<< endl;
+        }
+        delete pr;
     }
 
     return EXIT_SUCCESS;
