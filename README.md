@@ -1,3 +1,3 @@
 # 5300-Jackal
 
-# cd ~/cpsc5300
+cd ~/cpsc5300
