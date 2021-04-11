@@ -24,62 +24,10 @@ string executeCreate(const CreateStatement *stmt);
 string executeSelect(const SelectStatement *stmt);
 string execute(const SQLStatement *stmt);
 string tableReftoString(const TableRef *table);
+string colDefToStr(const ColumnDefinition* cd);
 
 
 
-string tableReftoString(const TableRef *t)
-{
-    String s = "";
-    switch(t->type)
-    {
-        case kTableSelect:
-            s += "kTableSelect";
-            break;
-        case kTableName:
-            s += t->name;
-            if(t->alias != NULL)
-                s += string(" AS ") + t->alias;
-            break;
-        case kTableJoin:
-            s += tableReftoString(t->join->left);
-            switch(t->join->type)
-            {
-                case kJoinInner:
-                    s += " JOIN "
-                    break;
-                case kJoinLeft:
-                    s += "LEFT JOIN ";
-                    break;
-                case kJoinRight:
-                    s += "RIGHT JOIN";
-                    break;
-                case kJoinOtter:
-                case kJoinLeftOuter:
-                case kJoinRightOuter:
-                case kJoincross:
-                case kJoinNatural:
-                    s += " NATURAL JOIN ";
-                    break;
-            }
-            s += tableReftoString(t->join->right);
-            if (t->join->condition != NULL)
-                s += " ON " + convertExpressionToStr(t->join->right);
-            break;
-
-        case kTableCrossProduct:
-            bool comma = false;
-            for(TableRef *tbr : *t->list)
-            {
-                if(comma)
-                    s += ", ";
-                s += tableReftoString(tbr);
-                comma = true; 
-            }
-            break;
-
-    }
-    return s;
-}
 
 
 // TODO: below method didn't consider Ternary operators. And for unary operators, it only considers NOT so far
@@ -285,7 +233,90 @@ string exprToString(const Expr *expr)
     return s;
 }
 
+/**
+ * Convert table expression to sql statement
+ * @param t  operator expression to be converted
+ * @return      SQL version of operator expression
+ */
+string tableReftoString(const TableRef *t)
+{
+    String s = "";
+    switch(t->type)
+    {
+        case kTableSelect:
+            s += "kTableSelect";
+            break;
+        case kTableName:
+            s += t->name;
+            if(t->alias != NULL)
+                s += string(" AS ") + t->alias;
+            break;
+        case kTableJoin:
+            s += tableReftoString(t->join->left);
+            switch(t->join->type)
+            {
+                case kJoinInner:
+                    s += " JOIN "
+                    break;
+                case kJoinLeft:
+                    s += "LEFT JOIN ";
+                    break;
+                case kJoinRight:
+                    s += "RIGHT JOIN";
+                    break;
+                case kJoinOtter:
+                case kJoinLeftOuter:
+                case kJoinRightOuter:
+                case kJoincross:
+                case kJoinNatural:
+                    s += " NATURAL JOIN ";
+                    break;
+            }
+            s += tableReftoString(t->join->right);
+            if (t->join->condition != NULL)
+                s += " ON " + convertExpressionToStr(t->join->right);
+            break;
 
+        case kTableCrossProduct:
+            bool comma = false;
+            for(TableRef *tbr : *t->list)
+            {
+                if(comma)
+                    s += ", ";
+                s += tableReftoString(tbr);
+                comma = true; 
+            }
+            break;
+
+    }
+    return s;
+}
+
+/**
+ * Convert column expression to type
+ * @param cd  column expression to be converted
+ * @return      corresponding type
+ */
+string colDefToStr(const ColumnDefinition* cd)
+{
+    string s(col->name);
+    switch (col->type)
+    {
+        case ColumnDefinition::INT:
+            s += " INT";
+            break;
+        case ColumnDefinition::DOUBLE:
+            s += " DOUBLE";
+            break;
+        case ColumnDefinition::TEXT:
+            s += " TEXT";
+            break;
+        default:
+            s += " ?TYPE?";
+            break;
+    }
+    return s;
+}
 
 int main(int len, char* args[])
 {
