@@ -16,12 +16,13 @@ DbEnv *DB_ENV;
 
 // forward declare
 string convertOperatorToStr(const Expr *expr);
-string convertExpressionToStr(const Expr *expr);
-string executeCreate(const CreateStatement *stmt);
-string executeSelect(const SelectStatement *stmt);
-string execute(const SQLStatement *stmt);
+//string convertExpressionToStr(const Expr *expr);
+string execCreate(const CreateStatement *stmt);
+string execSelect(const SelectStatement *stmt);
+string exec(const SQLStatement *stmt);
 string tableReftoString(const TableRef *table);
 string colDefToStr(const ColumnDefinition* cd);
+string exprToString(const Expr *expr);
 
 
 // TODO: below method didn't consider Ternary operators. And for unary operators, it only considers NOT so far
@@ -77,16 +78,8 @@ string convertOperatorToStr(const Expr *expr) {
     if (expr->expr2 != NULL) {
         res += " " + convertExpressionToStr(expr->expr2);
     }
-
     return res;
 }
-
-
-
-
-
-
-
 
 // TODO: implement utility function: convertColInfoToStr()
 /**
@@ -118,9 +111,7 @@ string execCreate(const CreateStatement *stmt) {
         res += convertColInfoToStr(col);
         addComma = true;
     }
-
     res += ")";
-
     return res;
 }
 
@@ -185,7 +176,6 @@ string exec(const SQLStatement *stmt) {
  * @param stmt  an expression 
  * @returns     an transcribed formatted SQL statement
  */
-
 string exprToString(const Expr *expr)
 {
     string s = "";
@@ -328,11 +318,11 @@ int main(int len, char* args[])
 	env.set_error_stream(&cerr);
 	env.open(directory, DB_CREATE | DB_INIT_MPOOL, 0);
 
-    _DB_ENV = &env;
-   
-    // prompt SQL
+    _DB_ENV = &env; //assign to the global var
+    
     while (true)
     {
+        // prompt SQL
         cout << "SQL> ";
         string query = "";
         cin >> query;
@@ -352,7 +342,7 @@ int main(int len, char* args[])
             delete pr;
             continue;
         }
-        cout << "parse ok!" << endl;
+        cout << "parse OK!" << endl;
         for(uint i = 0; i < pr->size(); i++)
         {
             cout << exec(pr->getStatement(i))<< endl;
