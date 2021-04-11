@@ -23,7 +23,7 @@ string exec(const SQLStatement *stmt);
 string tableReftoString(const TableRef *table);
 string colDefToStr(const ColumnDefinition* cd);
 string execInsert(const InsertStatement* stmt);
-string exprToString(const Expr *expr);
+string convertExpressionToStr(const Expr *expr);
 
 
 // TODO: below method didn't consider Ternary operators. And for unary operators, it only considers NOT so far
@@ -109,7 +109,7 @@ string execCreate(const CreateStatement *stmt) {
         if (addComma) {
             res += ", ";
         }
-        res += convertColInfoToStr(col);
+        res += colDefToStr(col);
         addComma = true;
     }
     res += ")";
@@ -163,9 +163,9 @@ string execInsert(const InsertStatement* stmt)
 string exec(const SQLStatement *stmt) {
     switch (stmt->type()) {
         case kStmtSelect:
-            return executeSelect((const SelectStatement *) stmt);
+            return execSelect((const SelectStatement *) stmt);
         case kStmtCreate:
-            return executeCreate((const CreateStatement *) stmt);
+            return execCreate((const CreateStatement *) stmt);
         default:
             return "Not supported operation";
     }
@@ -177,7 +177,7 @@ string exec(const SQLStatement *stmt) {
  * @param stmt  an expression 
  * @returns     an transcribed formatted SQL statement
  */
-string exprToString(const Expr *expr)
+string convertExpressionToStr(const Expr *expr)
 {
     string s = "";
     switch(expr->type)
