@@ -135,7 +135,7 @@ string execSelect(const SelectStatement *stmt) {
         addComma = true;
     }
 
-    res += " FROM " + convertTableRefInfoToStr(stmt->fromTable);
+    res += " FROM " + tableReftoString(stmt->fromTable);
     if (stmt->whereClause != NULL) {
         res += " WHERE " + convertExpressionToStr(stmt->whereClause);
     }
@@ -183,7 +183,7 @@ string convertExpressionToStr(const Expr *expr)
     switch(expr->type)
     {
         case kExprOperator:
-            s += operatorExprToString(expr);
+            s += convertExpressionToStr(expr);
             break;
         case kExprColumnRef:
             if(expr->table != NULL)
@@ -224,7 +224,7 @@ string convertExpressionToStr(const Expr *expr)
  */
 string tableReftoString(const TableRef *t)
 {
-    String s = "";
+    string s = "";
     switch(t->type)
     {
         case kTableSelect:
