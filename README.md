@@ -1,3 +1,7 @@
 # 5300-Jackal
 
-cd ~/cpsc5300
+$ cd ~/cpsc5300
+$ git clone https://github.com/klundeen/5300-Jackal.git
+$ cd 5300-Jackal
+$ make
+

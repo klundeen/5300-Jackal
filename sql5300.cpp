@@ -22,6 +22,7 @@ string execSelect(const SelectStatement *stmt);
 string exec(const SQLStatement *stmt);
 string tableReftoString(const TableRef *table);
 string colDefToStr(const ColumnDefinition* cd);
+string execInsert(const InsertStatement* stmt);
 string exprToString(const Expr *expr);
 
 
