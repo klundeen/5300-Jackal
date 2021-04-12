@@ -247,7 +247,7 @@ string tableReftoString(const TableRef* t)
                 case kJoinOtter:
                 case kJoinLeftOuter:
                 case kJoinRightOuter:
-                case kJoincross:
+                case kJoinCross:
                 case kJoinNatural:
                     s += " NATURAL JOIN ";
                     break;
