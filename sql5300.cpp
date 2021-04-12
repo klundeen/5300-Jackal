@@ -191,17 +191,16 @@ string convertExpressionToStr(const Expr* expr)
             s += expr->name;
             break;
         case kExprLiteralFloat:
-            string floatStr = to_string(expr->fval);
-            s += floatStr;
+            s += to_string(expr->fval);
             break;
         case kExprFunctionRef:
             s += string(expr->name) + "?" + expr->expr->name;
             break;
         case kExprLiteralInt:
-            string litStr = to_string(expr->ival);
+            s += to_string(expr->ival);
             break;
         case kExprStar:
-            s += "s";
+            s += "*";
             break;
         default:
             s += "?NotRecognize?";
