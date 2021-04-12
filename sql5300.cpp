@@ -174,7 +174,7 @@ string exec(const SQLStatement *stmt) {
  * @param stmt  an expression 
  * @returns     an transcribed formatted SQL statement
  */
-string convertExpressionToStr(const Expr *expr)
+string convertExpressionToStr(const Expr* expr)
 {
     string s = "";
     switch(expr->type)
@@ -204,7 +204,7 @@ string convertExpressionToStr(const Expr *expr)
             s += "s";
             break;
         default:
-            ret += "?NotRecognize?";
+            s += "?NotRecognize?";
             break;
     }
     if(expr->alias != NULL)
