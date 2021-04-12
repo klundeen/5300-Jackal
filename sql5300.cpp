@@ -218,7 +218,7 @@ string convertExpressionToStr(const Expr* expr)
  * @param t  operator expression to be converted
  * @return      SQL version of operator expression
  */
-string tableReftoString(const TableRef *t)
+string tableReftoString(const TableRef* t)
 {
     string s = "";
     switch(t->type)
