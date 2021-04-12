@@ -6,22 +6,22 @@
 #include <cassert>
 #include "db_cxx.h"
 #include "SQLParser.h"
+#include "sqlhelper.h"
 
 using namespace std;
 using namespace hsql;
 
+DbEnv *DB_ENV;
 
 // forward declare
 string convertOperatorToStr(const Expr *expr);
-//string convertExpressionToStr(const Expr *expr);
 string execCreate(const CreateStatement *stmt);
 string execSelect(const SelectStatement *stmt);
 string exec(const SQLStatement *stmt);
 string tableReftoString(const TableRef *table);
-string colDefToStr(const ColumnDefinition* cd);
-string execInsert(const InsertStatement* stmt);
+string colDefToStr(const ColumnDefinition *d);
+string execInsert(const InsertStatement *stmt);
 string convertExpressionToStr(const Expr *expr);
-
 
 // TODO: below method didn't consider Ternary operators. And for unary operators, it only considers NOT so far
 /**
@@ -79,7 +79,6 @@ string convertOperatorToStr(const Expr *expr) {
     return res;
 }
 
-// TODO: implement utility function: convertColInfoToStr()
 /**
  * Execute a create statement
  *
@@ -113,12 +112,11 @@ string execCreate(const CreateStatement *stmt) {
     return res;
 }
 
-// TODO: implement utility function: convertExpressionToStr(), and convertTableRefInfoToStr()
 /**
  * Execute a select statement
  *
  * @param stmt  a select statement to be executed
- * @return     a string representation of the SQL statement
+ * @return      a string representation of the SQL statement
  */
 string execSelect(const SelectStatement *stmt) {
     string res = "SELECT ";
@@ -146,8 +144,7 @@ string execSelect(const SelectStatement *stmt) {
  * @param stmt  sql statement to be executed
  * @returns     a string representation of the SQL statement
  */
-string execInsert(const InsertStatement* stmt)
-{
+string execInsert(const InsertStatement *stmt) {
     return "INSERT ";
 }
 
@@ -155,7 +152,7 @@ string execInsert(const InsertStatement* stmt)
  * Execute a sql statement
  *
  * @param stmt  sql statement to be executed
- * @return     a string representation of the SQL statement
+ * @return      a string representation of the SQL statement
  */
 string exec(const SQLStatement *stmt) {
     switch (stmt->type()) {
@@ -172,19 +169,16 @@ string exec(const SQLStatement *stmt) {
  * Convert the expression into SQL statement
  *
  * @param stmt  an expression 
- * @returns     an transcribed formatted SQL statement
+ * @return      a transcribed formatted SQL statement
  */
-string convertExpressionToStr(const Expr* expr)
-{
+string convertExpressionToStr(const Expr *expr) {
     string s = "";
-    switch(expr->type)
-    {
+    switch (expr->type) {
         case kExprOperator:
-            s += convertExpressionToStr(expr);
+            s += convertOperatorToStr(expr);
             break;
         case kExprColumnRef:
-            if(expr->table != NULL)
-            {
+            if (expr->table != NULL) {
                 s += string(expr->table) + ".";
             }
         case kExprLiteralString:
@@ -206,23 +200,22 @@ string convertExpressionToStr(const Expr* expr)
             s += "?NotRecognize?";
             break;
     }
-    if(expr->alias != NULL)
-    {
+
+    if (expr->alias != NULL) {
         s += string(" AS ") + expr->alias;
     }
+
     return s;
 }
 
 /**
  * Convert table expression to sql statement
- * @param t  operator expression to be converted
- * @return      SQL version of operator expression
+ * @param t    operator expression to be converted
+ * @return     SQL version of operator expression
  */
-string tableReftoString(const TableRef* t)
-{
+string tableReftoString(const TableRef *t) {
     string s = "";
-    switch(t->type)
-    {
+    switch(t->type) {
         case kTableSelect:
             s += "kTableSelect";
             break;
@@ -233,8 +226,7 @@ string tableReftoString(const TableRef* t)
             break;
         case kTableJoin:
             s += tableReftoString(t->join->left);
-            switch(t->join->type)
-            {
+            switch (t->join->type) {
                 case kJoinInner:
                     s += " JOIN ";
                     break;
@@ -244,7 +236,7 @@ string tableReftoString(const TableRef* t)
                 case kJoinRight:
                     s += "RIGHT JOIN";
                     break;
-                case kJoinOtter:
+                case kJoinOuter:
                 case kJoinLeftOuter:
                 case kJoinRightOuter:
                 case kJoinCross:
@@ -254,20 +246,18 @@ string tableReftoString(const TableRef* t)
             }
             s += tableReftoString(t->join->right);
             if (t->join->condition != NULL)
-                s += " ON " + convertExpressionToStr(t->join->right);
+                s += " ON " + convertExpressionToStr(t->join->condition);
             break;
 
         case kTableCrossProduct:
             bool comma = false;
-            for(TableRef *tbr : *t->list)
-            {
-                if(comma)
+            for(TableRef *tbr : *t->list) {
+                if (comma)
                     s += ", ";
                 s += tableReftoString(tbr);
                 comma = true; 
             }
             break;
-
     }
     return s;
 }
@@ -277,11 +267,10 @@ string tableReftoString(const TableRef* t)
  * @param cd  column expression to be converted
  * @return      corresponding type
  */
-string colDefToStr(const ColumnDefinition* cd)
+string colDefToStr(const ColumnDefinition *cd)
 {
     string s(cd->name);
-    switch (cd->type)
-    {
+    switch (cd->type) {
         case ColumnDefinition::INT:
             s += " INT";
             break;
@@ -298,51 +287,54 @@ string colDefToStr(const ColumnDefinition* cd)
     return s;
 }
 
-int main(int len, char* args[])
-{
-    if(len != 2)
-    {
+int main(int len, char* args[]) {
+    if (len != 2) {
         cerr << "Usage: cpsc5300: dbenvpath" << endl;
         return 1;
     }
 
     // create a BerkDB environment
-    char* directory = args[1];
-    cout << "sql5300 BerkDB environment is at" << directory << endl;
+    char *directory = args[1];
+    cout << "sql5300 BerkDB environment is at " << directory << endl;
 
     DbEnv env(0U);
 	env.set_message_stream(&cout);
 	env.set_error_stream(&cerr);
-	env.open(directory, DB_CREATE | DB_INIT_MPOOL, 0);
 
-    
-    while (true)
-    {
+    try {
+        env.open(directory, DB_CREATE | DB_INIT_MPOOL, 0);     
+    } catch (DbException &ex) {
+        cerr << "sql5300: " << ex.what() << endl;
+        exit(1);
+    }
+    DB_ENV = &env;
+
+    while (true) {
         // prompt SQL
         cout << "SQL> ";
         string query = "";
-        cin >> query;
-        cout << endl;
+        getline(cin, query);
 
-        if(query.length() == 0) 
+        if (query.length() == 0) 
             continue; 
-        if(query == "quit")
+        if (query == "quit")
             break;
 
         // parse
         SQLParserResult *pr = SQLParser::parseSQLString(query);
-        if(!pr->isValid())
-        {
+        if (!pr->isValid()) {
             cout << "INVALID SQL: " << query << endl;
             cout << "Please enter a valid SQL query!" << endl;
             delete pr;
             continue;
         }
+
         cout << "parse OK!" << endl;
-        for(uint i = 0; i < pr->size(); i++)
-        {
-            cout << exec(pr->getStatement(i))<< endl;
+
+        for (uint i = 0; i < pr->size(); i++) {
+            cout << exec(pr->getStatement(i)) << endl;
         }
+
         delete pr;
     }
 
