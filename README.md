@@ -1,6 +1,6 @@
 # 5300-Jackal
 
-## milestone1 team: 
+## Milestone 1: Skeleton -- Team: Tong Xu, Yinhui Li
 ```
 $ cd ~/cpsc5300
 $ git clone https://github.com/klundeen/5300-Jackal.git
@@ -11,3 +11,5 @@ $ make
 ```
 $ ./sql5300 ~/cpsc5300/data
 ```
+---
+
