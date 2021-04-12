@@ -11,7 +11,7 @@
 using namespace std;
 using namespace hsql;
 
-DbEnv *DB_ENV;
+DbEnv *_DB_ENV;
 
 // forward declare
 string convertOperatorToStr(const Expr *expr);
@@ -307,7 +307,7 @@ int main(int len, char* args[]) {
         cerr << "sql5300: " << ex.what() << endl;
         exit(1);
     }
-    DB_ENV = &env;
+    _DB_ENV = &env;
 
     while (true) {
         // prompt SQL
