@@ -231,10 +231,10 @@ string tableReftoString(const TableRef *t) {
                     s += " JOIN ";
                     break;
                 case kJoinLeft:
-                    s += "LEFT JOIN ";
+                    s += " LEFT JOIN ";
                     break;
                 case kJoinRight:
-                    s += "RIGHT JOIN";
+                    s += " RIGHT JOIN ";
                     break;
                 case kJoinOuter:
                 case kJoinLeftOuter:
@@ -324,12 +324,9 @@ int main(int len, char* args[]) {
         SQLParserResult *pr = SQLParser::parseSQLString(query);
         if (!pr->isValid()) {
             cout << "INVALID SQL: " << query << endl;
-            cout << "Please enter a valid SQL query!" << endl;
             delete pr;
             continue;
         }
-
-        cout << "parse OK!" << endl;
 
         for (uint i = 0; i < pr->size(); i++) {
             cout << exec(pr->getStatement(i)) << endl;
