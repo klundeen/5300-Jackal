@@ -231,52 +231,61 @@ void HeapFile::db_open(uint flags = 0)
 // =====Heaptable=====
 HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes)
 {
-    
+    DbRelation(table_name, column_names, column_attributes);
+    this->file = HeapFile(table_name);
 }
 
 void HeapTable::create()
 {
-
+    this->file.create();
 }
 
 void HeapTable::create_if_not_exists()
 {
-
+    try
+    {
+        this->open();
+    }
+    catch(DbRelationError)
+    {
+        this->create();
+    }
 }
 
 void HeapTable::drop()
 {
-
+    this->file.drop();
 }
 
 void HeapTable::open()
 {
-
+    this->file.open();
 }
 
 void HeapTable::close()
 {
-
+    this->file.close();
 }
 
 Handle HeapTable::insert(const ValueDict *row)
 {
-
+    this->open();
+    return this->append(row);
 }
 
 void HeapTable::update(const Handle handle, const ValueDict *new_values)
 {
-
+    // "Not milestone 2 for HeapTable"
 }
 
 void HeapTable::del(const Handle handle)
 {
-
+    // "Not milestone 2 for HeapTable"
 }
 
 Handles* HeapTable::select()
 {
-
+    // "Not milestone 2 for HeapTable"
 }
 
 Handles* HeapTable::select(const ValueDict *where)
@@ -297,23 +306,42 @@ Handles* HeapTable::select(const ValueDict *where)
 
 ValueDict* HeapTable::project(Handle handle)
 {
-
+    // "Not milestone 2 for HeapTable"
 }
 
 ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names)
 {
-
+    // "Not milestone 2 for HeapTable"
 }
 
+// !!not finish****
 // protected
 ValueDict* HeapTable::validate(const ValueDict *row)
 {
-
+    map<, > full_row;
+    for(Identifier column_name:this->column_attributes)
+    {
+        ColumnAttribute column = this->column_attributes[column_names];
+        if(column_name.)
+    }
 }
 
 Handle HeapTable::append(const ValueDict *row)
 {
-
+    Dbt* data = this->marshal(row);
+    SlottedPage* block = this->file.get(this->file.get_last_block_id());
+    RecordID record_id;
+    try
+    {
+        record_id = block->add(data);
+    }
+    catch(DbRelationError)
+    {
+        block = this->file.get_new();
+        record_id = block->add(data);
+    }
+    this->file.put(block);
+    return this->file.get_last_block_id(), record_id
 }
 
 // return the bits to go into the file
@@ -347,7 +375,14 @@ Dbt* HeapTable::marshal(const ValueDict *row)
     return data;
 }
 
+// !! not finish
 ValueDict* HeapTable::unmarshal(Dbt *data)
 {
-
+    map<, > row;
+    int offset = 0;
+    for(Identifier column_name: this->column_names)
+    {
+        this->co
+    }
+    
 }
