@@ -1,5 +1,10 @@
+#include <iostream>
+#include <string>
 #include "heap_storage.h"
 using namespace std;
+
+typedef uint16_t u_int16_t;
+
 // =====slottedPage=====
 
 SlottedPage::SlottedPage(Dbt &block, BlockID block_id, bool is_new = false) 
@@ -33,34 +38,78 @@ RecordID SlottedPage::add(const Dbt *data)
 
 Dbt* SlottedPage::get(RecordID record_id)
 {
-
+    u_int16_t size, loc;
+    get_header(size, loc, record_id);
+    if(loc == 0)
+    {
+        return nullptr; // ?? None in python
+    }
+    return new Dbt(this->address(loc), size)
 }
 
 void SlottedPage::put(RecordID record_id, const Dbt &data)
 {
-
+    u_int16_t size, loc;
+    this->get_header(size, loc, record_id);
+    u_int16_t new_size = (u_int16_t) data.get_size();
+    if(new_size > size)
+    {
+        u_int16_t extra = new_size - size;
+        if(!this->has_room(extra))
+        {
+            throw DbBlockNoRoomError("Not enough room in block");
+        }
+        this->slide(loc + new_size, loc + size);
+        memcpy(this->address(loc - extra), data->get_data(), new_size);
+    }
+    else
+    {
+        memcpy(this->address(loc), data->get_data(), new_size);
+        this->slide(loc + new_size, loc + size);
+    }
+    get_header(size, loc, record_id);
+    put_header(record_id, size, loc);
 }
 
 void SlottedPage::del(RecordID record_id)
 {
-
+    u_int16_t size, loc;
+    this->put_header(record_id, 0, 0);
+    this->slide(loc, loc + size);
 }
 
 RecordIDs* SlottedPage::ids(void)
 {
-
+    u_int16_t size, loc;
+    RecordID* sequence = new RecordIDs();
+    for(u_int16_t i = 1; i < this.num_records + 1; i++)
+    {
+        get_header(size, loc, i)
+        if(loc != 0)
+        {
+            sequence->push_back(i);
+        }
+    }
+    return sequence;
 }
 
 // protected
 void SlottedPage::get_header(u_int16_t &size, u_int16_t &loc, RecordID id = 0)
 {
-
+    this->get_n((u_int16_t)4 * id);
+    this->get_n((u_int16_t)(4 * id + 4));
 }
 
 // Store the size and offset for given id. For id of zero, store the block header.
 void SlottedPage::put_header(RecordID id = 0, u_int16_t size = 0, u_int16_t loc = 0)
 {
-
+    if(id = 0)
+    {
+        size = this->num_records;
+        loc = this->end_free;
+    }
+    put_n((u_int16_t)4 * id, size);
+    put_n((u_int16_t)(4 * id + 2), loc);
 }
 
 bool SlottedPage::has_room(u_int16_t size)
@@ -75,7 +124,24 @@ bool SlottedPage::has_room(u_int16_t size)
 
 void SlottedPage::slide(u_int16_t start, u_int16_t end)
 {
+    u_int16_t shift = end - start;
+    if(shift == 0)
+    {
+        return;
+    }
 
+    for (int i = 0; i < this.ids->size(); i++)
+    {
+        u_int16_t size, loc; 
+        get_header(size, loc, i);
+        if(loc <= start) 
+        {
+            loc += shift;
+            put_header(i, size, loc);
+        }   
+    }
+    this->end_free += shift;
+    put_header();
 }
 
 // Get 2-byte integer at given offset in block.
