@@ -133,22 +133,52 @@ public:
 
     HeapFile &operator=(HeapFile &&temp) = delete;
 
+
+    /**
+     * Create the physical file
+     */
     virtual void create(void);
 
+    /**
+     * Drop the physical file
+     */
     virtual void drop(void);
 
+    /**
+     * Open the physical file
+     */
     virtual void open(void);
 
+    /**
+     * Close the physical file
+     */
     virtual void close(void);
 
+    /**
+     * Allocate a new block for the db file
+     * @return the empty block
+     */
     virtual SlottedPage *get_new(void);
 
+    /**
+     * Get the block by given block_id in file
+     * @param block_id
+     * @return the block
+     */
     virtual SlottedPage *get(BlockID block_id);
 
+    /**
+     * Put a block into the db file
+     * @param block
+     */
     virtual void put(DbBlock *block);
 
+    /**
+     * Find existing block ids
+     * @return a sequence of existing block ids
+     */
     virtual BlockIDs *block_ids();
-
+    
     virtual u_int32_t get_last_block_id() { return last; }
 
 protected:
