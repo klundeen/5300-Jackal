@@ -28,6 +28,10 @@
  */
 class SlottedPage : public DbBlock {
 public:
+
+    /**
+     * Constructor
+     */
     SlottedPage(Dbt &block, BlockID block_id, bool is_new = false);
 
     // Big 5 - we only need the destructor, copy-ctor, move-ctor, and op= are unnecessary
@@ -42,26 +46,62 @@ public:
 
     SlottedPage &operator=(SlottedPage &temp) = delete;
 
+    /**
+     * Add a new record to the block
+     * @param data
+     * @return  Return the block id
+     */
     virtual RecordID add(const Dbt *data);
 
+    /**
+     * Get a recod from the block
+     * @param   record_id
+     * @return  Return None if the record was deleted
+     */
     virtual Dbt *get(RecordID record_id);
 
+    /**
+     * Replace the data from the record
+     * @param   record_id, data
+     */
     virtual void put(RecordID record_id, const Dbt &data);
 
+    /**
+     * Delete a record, and reset the size and location to 0
+     * @param   record_id
+     */
     virtual void del(RecordID record_id);
 
+    /**
+     * Find out the non-deleted record ids
+     * @return the non-deleted record ids
+     */
     virtual RecordIDs *ids(void);
 
 protected:
     u_int16_t num_records;
     u_int16_t end_free;
 
+    /**
+     * Get the header block
+     * @param size, loc, id
+     */
     virtual void get_header(u_int16_t &size, u_int16_t &loc, RecordID id = 0);
 
+    /**
+     * Put the header block
+     * @param id, size, loc
+     */
     virtual void put_header(RecordID id = 0, u_int16_t size = 0, u_int16_t loc = 0);
 
+    /**
+     * Calculate the available room to store a record with the size 
+     * @param size
+     * @return has enough room to store or not
+     */
     virtual bool has_room(u_int16_t size);
 
+    
     virtual void slide(u_int16_t start, u_int16_t end);
 
     virtual u_int16_t get_n(u_int16_t offset);
