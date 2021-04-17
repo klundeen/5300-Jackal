@@ -5,7 +5,7 @@ using namespace std;
 
 typedef uint16_t u_int16_t;
 
-// =====slottedPage=====
+// =============================slottedPage==================================
 SlottedPage::SlottedPage(Dbt &block, BlockID block_id, bool is_new = false) 
 {
     if (is_new) 
@@ -162,7 +162,7 @@ void* SlottedPage::address(u_int16_t offset)
 }
 
 
-// =====HeapFile=====
+// ===================================HeapFile=======================================
 void HeapFile::create(void)
 {
     this->db_open(DB_CREATE | DB_EXCL);
@@ -207,28 +207,39 @@ SlottedPage* HeapFile::get_new(void)
     return page;
 }
 
+// not finish!!*****
 SlottedPage* HeapFile::get(BlockID block_id)
 {
+    return SlottedPage(, block_id);
 }
 
+// not finish !! need def for db
 void HeapFile::put(DbBlock *block)
 {
-
 }
 
 BlockIDs* HeapFile::block_ids()
 {
-
+    RecordID* sequence = new RecordIDs();
+    for(u_int16_t i = 1; i < this->last + 1; i++)
+    {
+        sequence->push_back(i);
+    }
+    return sequence;
 }
 
 // protected
+// not finish !! need def for db
 void HeapFile::db_open(uint flags = 0)
 {
-
+    if(!this->closed)
+    {
+        return;
+    }
 }
 
 
-// =====Heaptable=====
+// ===========================================Heaptable============================
 HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes)
 {
     DbRelation(table_name, column_names, column_attributes);
