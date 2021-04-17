@@ -178,7 +178,7 @@ public:
      * @return a sequence of existing block ids
      */
     virtual BlockIDs *block_ids();
-    
+
     virtual u_int32_t get_last_block_id() { return last; }
 
 protected:
@@ -208,39 +208,77 @@ public:
 
     HeapTable &operator=(HeapTable &&temp) = delete;
 
+    /**
+     * Execute CREATE TABLLE statement
+     */
     virtual void create();
 
+    /**
+     * Execute CREATE TABLLE IF NOT EXISTS statement
+     */
     virtual void create_if_not_exists();
 
+    /**
+     * Execute DROP TABLE statement
+     */
     virtual void drop();
 
+    /**
+     * Open the existing table
+     */
     virtual void open();
 
+    /**
+     * Close the existing table
+     */
     virtual void close();
 
+    /**
+     * Execute INSERT INTO statement
+     * @param row
+     * @return the handle for insert row
+     */
     virtual Handle insert(const ValueDict *row);
 
+    // "Not milestone 2 for HeapTable"  
     virtual void update(const Handle handle, const ValueDict *new_values);
 
+    // "Not milestone 2 for HeapTable"
     virtual void del(const Handle handle);
 
+    // "Not milestone 2 for HeapTable"
     virtual Handles *select();
 
     virtual Handles *select(const ValueDict *where);
 
+    // "Not milestone 2 for HeapTable"
     virtual ValueDict *project(Handle handle);
 
+    // "Not milestone 2 for HeapTable"
     virtual ValueDict *project(Handle handle, const ColumnNames *column_names);
 
 protected:
     HeapFile file;
 
+    /**
+     * To validate the given row can be inserted
+     * @param row
+     * @return the full row
+     */
     virtual ValueDict *validate(const ValueDict *row);
 
+    /**
+     * To add a record to the file
+     * @param row
+     * @return the last block id in record and the record id
+     */
     virtual Handle append(const ValueDict *row);
 
+    // return the bits to go into the file
+    // caller responsible for freeing the returned Dbt and its enclosed ret->get_data().
     virtual Dbt *marshal(const ValueDict *row);
 
+    
     virtual ValueDict *unmarshal(Dbt *data);
 };
 
