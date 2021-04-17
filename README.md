@@ -16,3 +16,10 @@ $ ./sql5300 ~/cpsc5300/data
 ---
 
 ## Milestone 2: Rudimentary Storage Engine -- Team: Tong Xu, Yinhui Li
+In heap_storage, HeapTable did not implement the following functions because it is not required for milestone 2.
+* virtual void update(const Handle handle, const ValueDict *new_values);
+* virtual void del(const Handle handle);
+* virtual Handles *select();
+* virtual ValueDict *project(Handle handle);
+* virtual ValueDict *project(Handle handle, const ColumnNames *column_names);
+
