@@ -1,6 +1,28 @@
+#include "storage_engine.h"
+using namespace std;
 
-// DbBlock
+// =====DbBlock=====
+// constructor
+DbBlock::DbBlock(Dbt &block, BlockID block_id, bool is_new = false) : block(block), block_id(block_id) 
+{}
 
-// DbFile
+// destructor
+DbBlock::~DbBlock() 
+{}
 
-// DbRelation
+void Tree::initialize_new() 
+{}
+
+
+
+
+
+
+// =====DbFile=====
+
+
+
+
+
+
+// =====DbRelation=====
