@@ -4,7 +4,7 @@
  * HeapFile: DbFile
  * HeapTable: DbRelation
  *
- * @author Kevin Lundeen, Yinhui Li, Tong Xu
+ * @author Kevin Lundeen
  * @see "Seattle University, CPSC5300, Spring 2021"
  */
 #pragma once
