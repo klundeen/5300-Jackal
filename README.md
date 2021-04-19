@@ -25,7 +25,7 @@ $ git checkout tags/Milestone1
 
 ## Milestone 2: Rudimentary Storage Engine -- Team: Tong Xu, Yinhui Li
 
-You also pull the tag for Milestone 2
+You can pull the tag for Milestone 2
 ```
 $ git checkout tags/Milestone2
 ```
