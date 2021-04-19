@@ -207,10 +207,11 @@ SlottedPage* HeapFile::get_new(void)
     return page;
 }
 
-// not finish!!*****
+
+// https://docs.oracle.com/cd/E17076_05/html/api_reference/CXX/dbget.html
 SlottedPage* HeapFile::get(BlockID block_id)
 {
-    return SlottedPage(, block_id);
+    return SlottedPage(this->db.get(block_id, NULL, NULL, 0), block_id);
 }
 
 // not finish !! need def for db
