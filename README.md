@@ -13,13 +13,27 @@ $ make
 ```
 $ ./sql5300 ~/cpsc5300/data
 ```
+
+
+You can also pull the tag for Milestone 1
+```
+$ git checkout tags/Milestone1
+```
+
+
 ---
 
 ## Milestone 2: Rudimentary Storage Engine -- Team: Tong Xu, Yinhui Li
+
+You also pull the tag for Milestone 2
+```
+$ git checkout tags/Milestone2
+```
+[Berkeley DB C++ API Reference](https://docs.oracle.com/cd/E17076_05/html/api_reference/CXX/frame_main.html) for db_cxx.h
+
 In heap_storage, HeapTable did not implement the following functions because it is not required for milestone 2.
 * virtual void update(const Handle handle, const ValueDict *new_values);
 * virtual void del(const Handle handle);
 * virtual Handles *select();
 * virtual ValueDict *project(Handle handle);
 * virtual ValueDict *project(Handle handle, const ColumnNames *column_names);
-
