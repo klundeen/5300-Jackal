@@ -211,7 +211,13 @@ void HeapFile::db_open(uint flags)
     db.set_re_len(DbBlock::BLOCK_SZ);
     dbfilename = name + ".db";
     db.open(nullptr, dbfilename.c_str(), nullptr, DB_RECNO, flags, 0644);
-    // not sure how to deal with the flag
+    if (flags == 0) {
+        DB_BTREE_STAT stat;
+        this->db.stat(nullptr, &stat, DB_FAST_STAT);
+        this->last = stat.bt_ndata;
+    } else {
+        this->last = 0;
+    }
     closed = false;
 }
 
@@ -385,34 +391,36 @@ Dbt* HeapTable::marshal(const ValueDict *row)
 }
 
 // !! not finish
-ValueDict* HeapTable::unmarshal(Dbt *data)
-{
-    map<Identifier, Value>* row = {};
+ValueDict* HeapTable::unmarshal(Dbt *data) {
+    std::map<Identifier, Value> *row = {};
     char *bytes = new char[DbBlock::BLOCK_SZ];
     uint offset = 0;
     uint i = 0;
+
     for (auto const& column_name : this->column_names) {
         ColumnAttribute ca = this->column_attributes[i++];
-        if (ca.get_data_type() == ColumnAttribute::DataType::INT) 
-        {
-            // FIX ME
-            offset += 4;
-
-        } 
-        else if (ca.get_data_type() == ColumnAttribute::DataType::TEXT) 
-        {
-            offset += 2;
-        
-        
+        ValueDict::const_iterator column = row->find(column_name);
+        Value value = column->second;
+        if (ca.get_data_type() == ColumnAttribute::DataType::INT) {
+            u16 size = *(u16 *) (bytes + offset);
+            offset += sizeof(u16);
+            value.n = *(u16 *) (bytes + offset);
+            offset += size;
+        } else if (ca.get_data_type() == ColumnAttribute::DataType::TEXT) {
+            u16 size = *(u16 *) (bytes + offset);
+            offset += sizeof(u16);
+            char buffer[DbBlock::BLOCK_SZ];
+            memcpy(buffer, bytes + offset, size);
+            buffer[size] = '\0';
+            value.s = string(buffer);  // assume ascii for now
+            offset += size;
+        } else {
+            throw DbRelationError("Only know how to unmarshal INT and TEXT");
         }
-        else{
-            // fix the second part column[data_type]
-            throw DbRelationError("Cannot unmarshal column[data_type]");
-        }
+        (*row)[column_name] = value;
     }
-    //return row;
-    return new ValueDict();//delete later
-    
+    delete[] bytes;
+    return row;    
 }
 
 // below method is from: https://seattleu.instructure.com/courses/1597073/files/66811759
