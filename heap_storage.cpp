@@ -138,36 +138,30 @@ void* SlottedPage::address(u16 offset) {
 
 
 // ===================================HeapFile=======================================
-void HeapFile::create(void)
-{
+void HeapFile::create(void) {
     this->db_open(DB_CREATE | DB_EXCL);
     SlottedPage* block = this->get_new();
-    delete block;
+    this->put(block);
 }
 
-// delete in .py
-// not sure this one
-void HeapFile::drop(void)
-{
+void HeapFile::drop(void) {
+    this->open();
     this->close();
-    this->closed = true;
+    remove(dbfilename.c_str()); // convert to c_str()
 }
 
-void HeapFile::open(void)
-{
+void HeapFile::open(void) {
     this->db_open();
 }
 
-void HeapFile::close(void)
-{
+void HeapFile::close(void) {
     this->db.close(0); //flag = 0
     this->closed = true;
 }
 
 // Allocate a new block for the database file.
 // Returns the new empty DbBlock that is managing the records in this block and its block id.
-SlottedPage* HeapFile::get_new(void)
-{
+SlottedPage* HeapFile::get_new(void) {
     char block[DbBlock::BLOCK_SZ];
     std::memset(block, 0, sizeof(block));
     Dbt data(block, sizeof(block));
@@ -184,24 +178,22 @@ SlottedPage* HeapFile::get_new(void)
 
 
 // https://docs.oracle.com/cd/E17076_05/html/api_reference/CXX/dbget.html
-SlottedPage* HeapFile::get(BlockID block_id)
-{
+SlottedPage* HeapFile::get(BlockID block_id) {
     Dbt key(&block_id, sizeof(block_id));
     Dbt data;
     this->db.get(nullptr, &key, &data, 0);
     return new SlottedPage(data, block_id, false);
-    //return SlottedPage(this->db.get(block_id));//block_id, NULL, NULL, 0), block_id);
 }
 
-// not finish !! need def for db
-void HeapFile::put(DbBlock *block)
-{
+void HeapFile::put(DbBlock *block) {
+    u32 blockID = block->get_block_id();
+    Dbt key(&blockID, sizeof(blockID));
+    db.put(nullptr, &key, block->get_block(), 0);
 }
 
-BlockIDs* HeapFile::block_ids()
-{
+BlockIDs* HeapFile::block_ids() {
     BlockIDs* sequence = new BlockIDs();
-    for(u_int16_t i = 1; i < this->last + 1; i++)
+    for(u32 i = 1; i < this->last + 1; i++)
     {
         sequence->push_back(i);
     }
@@ -212,10 +204,14 @@ BlockIDs* HeapFile::block_ids()
 // not finish !! need def for db
 void HeapFile::db_open(uint flags)
 {
-    if(!this->closed)
-    {
+    if (!closed) {
         return;
     }
+    db.set_re_len(DbBlock::BLOCK_SZ);
+    dbfilename = name + ".db";
+    db.open(nullptr, dbfilename.c_str(), nullptr, DB_RECNO, flags, 0644);
+    // not sure how to deal with the flag
+    closed = false;
 }
 
 
