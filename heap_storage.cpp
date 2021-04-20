@@ -272,7 +272,7 @@ Handles* HeapTable::select()
 {
     // "Not milestone 2 for HeapTable"
     // FIX ME
-    return new Handles();
+    return nullptr;
 }
 
 Handles* HeapTable::select(const ValueDict *where)
@@ -310,7 +310,7 @@ ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names)
 // protected
 ValueDict* HeapTable::validate(const ValueDict *row)
 {
-    map<Identifier, Value> full_row;
+    ValueDict* full_row = new ValueDict();
     
     for(Identifier column_name:this->column_attributes)
     {
@@ -325,7 +325,8 @@ ValueDict* HeapTable::validate(const ValueDict *row)
         {
             value = row->at(column_name);
         }
-        full_row[column_name] = value;
+        full_row->insert(<Identifier, Value>(column_name, value));
+        //full_row[column_name] = value;
     }
     return full_row
 }
@@ -383,6 +384,7 @@ Dbt* HeapTable::marshal(const ValueDict *row)
 ValueDict* HeapTable::unmarshal(Dbt *data)
 {
     map<Identifier, Value>* row = {};
+    char *bytes = new char[DbBlock::BLOCK_SZ];
     uint offset = 0;
 
     for (auto const& column_name : this->column_names) {
@@ -395,7 +397,7 @@ ValueDict* HeapTable::unmarshal(Dbt *data)
         } 
         else if (ca.get_data_type() == ColumnAttribute::DataType::TEXT) 
         {
-        
+            offset += 2;
         
         
         }
@@ -403,11 +405,9 @@ ValueDict* HeapTable::unmarshal(Dbt *data)
             // fix the second part
             throw DbRelationError("Cannot unmarshal" + "column[data_type]");
         }
-
-
-
-
     }
+    //return row;
+    return new ValueDict();//delete later
     
 }
 
