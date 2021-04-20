@@ -150,7 +150,7 @@ void HeapFile::create(void)
 void HeapFile::drop(void)
 {
     this->close();
-    this->close = true;
+    this->closed() = true;
 }
 
 void HeapFile::open(void)
@@ -160,7 +160,7 @@ void HeapFile::open(void)
 
 void HeapFile::close(void)
 {
-    this->db.close();
+    this->db.close(0); //flag = 0
     this->closed = true;
 }
 
@@ -186,7 +186,7 @@ SlottedPage* HeapFile::get_new(void)
 // https://docs.oracle.com/cd/E17076_05/html/api_reference/CXX/dbget.html
 SlottedPage* HeapFile::get(BlockID block_id)
 {
-    return SlottedPage(this->db.get(block_id);//block_id, NULL, NULL, 0), block_id);
+    return SlottedPage(this->db.get(block_id));//block_id, NULL, NULL, 0), block_id);
 }
 
 // not finish !! need def for db
@@ -196,7 +196,7 @@ void HeapFile::put(DbBlock *block)
 
 BlockIDs* HeapFile::block_ids()
 {
-    RecordIDs* sequence = new RecordIDs();
+    BlockIDs* sequence = new BlockIDs();
     for(u_int16_t i = 1; i < this->last + 1; i++)
     {
         sequence->push_back(i);
@@ -218,8 +218,8 @@ void HeapFile::db_open(uint flags = 0)
 // ===========================================Heaptable============================
 HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes)
 {
-    DbRelation(table_name, column_names, column_attributes);
-    this->file = HeapFile(table_name);
+   // DbRelation(table_name, column_names, column_attributes);
+   // this->file = HeapFile(table_name);
 }
 
 void HeapTable::create()
@@ -313,13 +313,11 @@ ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names)
 ValueDict* HeapTable::validate(const ValueDict *row)
 {
     ValueDict* full_row = new ValueDict();
-    
-    for(Identifier column_name:this->column_attributes)
+    for(Identifier column_name: column_names)
     {
-        ColumnAttribute column = this->column_attributes[column_names];
-        Value value = column->second;
-        if(column.get_data_type() != ColumnAttribute::DataType::TEXT
-        && column.get_data_type() != ColumnAttribute::DataType::INT)
+        ColumnAttribute column = this->column_attributes[i++];
+        Value value;
+        if(row->find(column_name) == row->end())//column.get_data_type() != ColumnAttribute::DataType::TEXT && column.get_data_type() != ColumnAttribute::DataType::INT)
         {
             throw DbRelationError("don't know how to handle NULLs, defaults, etc. yet");
         }
@@ -327,10 +325,10 @@ ValueDict* HeapTable::validate(const ValueDict *row)
         {
             value = row->at(column_name);
         }
-        full_row->insert(<Identifier, Value>(column_name, value));
+        full_row->insert(std::<Identifier, Value>(column_name, value));
         //full_row[column_name] = value;
     }
-    return full_row
+    return full_row;
 }
 
 Handle HeapTable::append(const ValueDict *row)
@@ -348,7 +346,7 @@ Handle HeapTable::append(const ValueDict *row)
         record_id = block->add(data);
     }
     this->file.put(block);
-    return this->file.get_last_block_id(), record_id
+    return (this->file.get_last_block_id(), record_id);
 }
 
 // return the bits to go into the file
@@ -388,9 +386,9 @@ ValueDict* HeapTable::unmarshal(Dbt *data)
     map<Identifier, Value>* row = {};
     char *bytes = new char[DbBlock::BLOCK_SZ];
     uint offset = 0;
-
+    uint i = 0;
     for (auto const& column_name : this->column_names) {
-        ColumnAttribute ca = this->column_attributes[col_num++];
+        ColumnAttribute ca = this->column_attributes[i++];
         if (ca.get_data_type() == ColumnAttribute::DataType::INT) 
         {
             // FIX ME
@@ -405,7 +403,7 @@ ValueDict* HeapTable::unmarshal(Dbt *data)
         }
         else{
             // fix the second part
-            throw DbRelationError("Cannot unmarshal" + "column[data_type]");
+            throw DbRelationError("Cannot unmarshal", "column[data_type]");
         }
     }
     //return row;

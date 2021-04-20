@@ -79,36 +79,36 @@ public:
     virtual RecordIDs *ids(void);
 
 protected:
-    u_int16_t num_records;
-    u_int16_t end_free;
+    u16 num_records;
+    u16 end_free;
 
     /**
      * Get the header block
      * @param size, loc, id
      */
-    virtual void get_header(u_int16_t &size, u_int16_t &loc, RecordID id = 0);
+    virtual void get_header(u16 &size, u16 &loc, RecordID id = 0);
 
     /**
      * Put the header block
      * @param id, size, loc
      */
-    virtual void put_header(RecordID id = 0, u_int16_t size = 0, u_int16_t loc = 0);
+    virtual void put_header(RecordID id = 0, u16 size = 0, u16 loc = 0);
 
     /**
      * Calculate the available room to store a record with the size 
      * @param size
      * @return has enough room to store or not
      */
-    virtual bool has_room(u_int16_t size);
+    virtual bool has_room(u16 size);
 
     
-    virtual void slide(u_int16_t start, u_int16_t end);
+    virtual void slide(u16 start, u16 end);
 
-    virtual u_int16_t get_n(u_int16_t offset);
+    virtual u16 get_n(u16 offset);
 
-    virtual void put_n(u_int16_t offset, u_int16_t n);
+    virtual void put_n(u16 offset, u16 n);
 
-    virtual void *address(u_int16_t offset);
+    virtual void *address(u16 offset);
 };
 
 /**
