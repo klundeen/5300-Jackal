@@ -223,13 +223,9 @@ void HeapFile::db_open(uint flags)
 
 
 // ===========================================Heaptable============================
-/*
-HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes)
+HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes) : DbRelation(table_name, column_names, column_attributes), file(table_name)
 {
-   // DbRelation(table_name, column_names, column_attributes);
-   // this->file = HeapFile(table_name);
 }
-*/
 void HeapTable::create()
 {
     this->file.create();
