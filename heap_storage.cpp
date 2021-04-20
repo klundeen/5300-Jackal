@@ -88,7 +88,7 @@ void SlottedPage::get_header(u16 &size, u16 &loc, RecordID id) {
 }
 
 // Store the size and offset for given id. For id of zero, store the block header.
-void SlottedPage::put_header() {
+void SlottedPage::put_header(RecordID id, u16 size, u16 loc) {
     if (id == 0) {
         size = this->num_records;
         loc = this->end_free;
@@ -150,7 +150,6 @@ void HeapFile::create(void)
 void HeapFile::drop(void)
 {
     this->close();
-    this->closed
     this->closed = true;
 }
 
@@ -211,7 +210,7 @@ BlockIDs* HeapFile::block_ids()
 
 // protected
 // not finish !! need def for db
-void HeapFile::db_open()
+void HeapFile::db_open(uint flags)
 {
     if(!this->closed)
     {
