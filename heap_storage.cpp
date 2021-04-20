@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
+#include <cstring>
 #include "heap_storage.h"
+#include "storage_engine.h"
 using namespace std;
 
 typedef u_int16_t u16;
@@ -87,7 +89,7 @@ void SlottedPage::get_header(u16 &size, u16 &loc, RecordID id) {
 
 // Store the size and offset for given id. For id of zero, store the block header.
 void SlottedPage::put_header(RecordID id = 0, u16 size = 0, u16 loc = 0) {
-    if (id = 0) {
+    if (id == 0) {
         size = this->num_records;
         loc = this->end_free;
     }
@@ -148,7 +150,7 @@ void HeapFile::create(void)
 void HeapFile::drop(void)
 {
     this->close();
-    this->close = True;
+    this->close = true;
 }
 
 void HeapFile::open(void)
@@ -159,7 +161,7 @@ void HeapFile::open(void)
 void HeapFile::close(void)
 {
     this->db.close();
-    this->closed = True;
+    this->closed = true;
 }
 
 // Allocate a new block for the database file.
@@ -184,7 +186,7 @@ SlottedPage* HeapFile::get_new(void)
 // https://docs.oracle.com/cd/E17076_05/html/api_reference/CXX/dbget.html
 SlottedPage* HeapFile::get(BlockID block_id)
 {
-    return SlottedPage(this->db.get(block_id, NULL, NULL, 0), block_id);
+    return SlottedPage(this->db.get(block_id);//block_id, NULL, NULL, 0), block_id);
 }
 
 // not finish !! need def for db
@@ -194,7 +196,7 @@ void HeapFile::put(DbBlock *block)
 
 BlockIDs* HeapFile::block_ids()
 {
-    RecordID* sequence = new RecordIDs();
+    RecordIDs* sequence = new RecordIDs();
     for(u_int16_t i = 1; i < this->last + 1; i++)
     {
         sequence->push_back(i);
