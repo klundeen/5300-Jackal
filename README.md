@@ -45,3 +45,6 @@ In heap_storage, HeapTable did not implement the following functions because it 
 * Handles* HeapTable::select(const ValueDict *where);
 * virtual ValueDict *project(Handle handle);
 * virtual ValueDict *project(Handle handle, const ColumnNames *column_names);
+
+// handoff video
+https://drive.google.com/file/d/1frwVYo8jejzql1D5VlK2CAGbtkM1DHKb/view?usp=sharing
