@@ -34,7 +34,7 @@ To test the test_heap_storage() function
 SQL> test
 ```
 
-** Here is the [handoff video](https://drive.google.com/file/d/1frwVYo8jejzql1D5VlK2CAGbtkM1DHKb/view?usp=sharing).Please contact us if you have any question. **
+**Here is the [handoff video](https://drive.google.com/file/d/1frwVYo8jejzql1D5VlK2CAGbtkM1DHKb/view?usp=sharing).Please contact us if you have any question.**
 
 
 [Berkeley DB C++ API Reference](https://docs.oracle.com/cd/E17076_05/html/api_reference/CXX/frame_main.html) for db_cxx.h
