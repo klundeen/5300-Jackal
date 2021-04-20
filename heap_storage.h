@@ -110,7 +110,7 @@ protected:
 
     virtual void put_n(u16 offset, u16 n);
 
-    virtual void *address((u16) offset);
+    virtual void *address(u16 offset);
 };
 
 /**
