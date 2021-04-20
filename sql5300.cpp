@@ -8,6 +8,7 @@
 #include "SQLParser.h"
 #include "sqlhelper.h"
 #include "heap_storage.h"
+#include "storage_engine.h"
 
 using namespace std;
 using namespace hsql;
