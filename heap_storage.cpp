@@ -276,13 +276,6 @@ void HeapTable::del(const Handle handle)
 
 Handles* HeapTable::select()
 {
-    // "Not milestone 2 for HeapTable"
-    // FIX ME
-    return nullptr;
-}
-
-Handles* HeapTable::select(const ValueDict *where)
-{
     Handles* handles = new Handles();
     BlockIDs* block_ids = file.block_ids();
     for (auto const& block_id: *block_ids) {
@@ -295,6 +288,14 @@ Handles* HeapTable::select(const ValueDict *where)
     }
     delete block_ids;
     return handles;
+}
+
+Handles* HeapTable::select(const ValueDict *where)
+{
+        
+    // "Not milestone 2 for HeapTable"
+    // FIX ME
+    return nullptr;
 }
 
 ValueDict* HeapTable::project(Handle handle)
