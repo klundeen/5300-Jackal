@@ -271,6 +271,8 @@ void HeapTable::del(const Handle handle)
 Handles* HeapTable::select()
 {
     // "Not milestone 2 for HeapTable"
+    // FIX ME
+    return new Handles();
 }
 
 Handles* HeapTable::select(const ValueDict *where)
@@ -292,11 +294,16 @@ Handles* HeapTable::select(const ValueDict *where)
 ValueDict* HeapTable::project(Handle handle)
 {
     // "Not milestone 2 for HeapTable"
+    // FIX ME
+    return new valueDict;
+
 }
 
 ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names)
 {
     // "Not milestone 2 for HeapTable"
+    // FIX ME
+    return new valueDict;
 }
 
 // !!not finish****
@@ -364,9 +371,6 @@ Dbt* HeapTable::marshal(const ValueDict *row)
 ValueDict* HeapTable::unmarshal(Dbt *data)
 {
     for (auto const& column_name : this->column_names) {
-
-
-
 
 
 

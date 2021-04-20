@@ -319,6 +319,10 @@ int main(int len, char* args[]) {
             continue; 
         if (query == "quit")
             break;
+        if (query == "test") {
+            cout << "test_heap_storage: " << (test_heap_storage() ? "ok" : "failed") << endl;
+            continue;
+        }
 
         // parse
         SQLParserResult *pr = SQLParser::parseSQLString(query);
