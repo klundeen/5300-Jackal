@@ -88,7 +88,7 @@ void SlottedPage::get_header(u16 &size, u16 &loc, RecordID id) {
 }
 
 // Store the size and offset for given id. For id of zero, store the block header.
-void SlottedPage::put_header(RecordID id = 0, u16 size = 0, u16 loc = 0) {
+void SlottedPage::put_header() {
     if (id == 0) {
         size = this->num_records;
         loc = this->end_free;
@@ -150,7 +150,8 @@ void HeapFile::create(void)
 void HeapFile::drop(void)
 {
     this->close();
-    this->closed() = true;
+    this->closed
+    this->closed = true;
 }
 
 void HeapFile::open(void)
@@ -186,7 +187,11 @@ SlottedPage* HeapFile::get_new(void)
 // https://docs.oracle.com/cd/E17076_05/html/api_reference/CXX/dbget.html
 SlottedPage* HeapFile::get(BlockID block_id)
 {
-    return SlottedPage(this->db.get(block_id));//block_id, NULL, NULL, 0), block_id);
+    Dbt key(&block_id, sizeof(block_id));
+    Dbt data;
+    this->db.get(nullptr, &key, &data, 0);
+    return new SlottedPage(data, block_id, false);
+    //return SlottedPage(this->db.get(block_id));//block_id, NULL, NULL, 0), block_id);
 }
 
 // not finish !! need def for db
@@ -206,7 +211,7 @@ BlockIDs* HeapFile::block_ids()
 
 // protected
 // not finish !! need def for db
-void HeapFile::db_open(uint flags = 0)
+void HeapFile::db_open()
 {
     if(!this->closed)
     {
@@ -216,12 +221,13 @@ void HeapFile::db_open(uint flags = 0)
 
 
 // ===========================================Heaptable============================
+/*
 HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes)
 {
    // DbRelation(table_name, column_names, column_attributes);
    // this->file = HeapFile(table_name);
 }
-
+*/
 void HeapTable::create()
 {
     this->file.create();
@@ -313,6 +319,7 @@ ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names)
 ValueDict* HeapTable::validate(const ValueDict *row)
 {
     ValueDict* full_row = new ValueDict();
+    uint i = 0;
     for(Identifier column_name: column_names)
     {
         ColumnAttribute column = this->column_attributes[i++];
@@ -325,7 +332,7 @@ ValueDict* HeapTable::validate(const ValueDict *row)
         {
             value = row->at(column_name);
         }
-        full_row->insert(std::<Identifier, Value>(column_name, value));
+        full_row->insert(std::pair<Identifier, Value>(column_name, value));
         //full_row[column_name] = value;
     }
     return full_row;
@@ -346,7 +353,8 @@ Handle HeapTable::append(const ValueDict *row)
         record_id = block->add(data);
     }
     this->file.put(block);
-    return (this->file.get_last_block_id(), record_id);
+    
+    return std::pair<BlockID, RecordID>(this->file.get_last_block_id(), record_id);
 }
 
 // return the bits to go into the file
@@ -402,8 +410,8 @@ ValueDict* HeapTable::unmarshal(Dbt *data)
         
         }
         else{
-            // fix the second part
-            throw DbRelationError("Cannot unmarshal", "column[data_type]");
+            // fix the second part column[data_type]
+            throw DbRelationError("Cannot unmarshal column[data_type]");
         }
     }
     //return row;
