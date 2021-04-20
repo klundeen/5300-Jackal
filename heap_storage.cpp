@@ -295,7 +295,7 @@ ValueDict* HeapTable::project(Handle handle)
 {
     // "Not milestone 2 for HeapTable"
     // FIX ME
-    return new valueDict;
+    return nullptr;
 
 }
 
@@ -303,19 +303,31 @@ ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names)
 {
     // "Not milestone 2 for HeapTable"
     // FIX ME
-    return new valueDict;
+    return nullptr;
 }
 
 // !!not finish****
 // protected
 ValueDict* HeapTable::validate(const ValueDict *row)
 {
-    map<, > full_row;
+    map<Identifier, Value> full_row;
+    
     for(Identifier column_name:this->column_attributes)
     {
         ColumnAttribute column = this->column_attributes[column_names];
-        if(column_name.)
+        Value value = column->second;
+        if(column.get_data_type() != ColumnAttribute::DataType::TEXT
+        && column.get_data_type() != ColumnAttribute::DataType::INT)
+        {
+            throw DbRelationError("don't know how to handle NULLs, defaults, etc. yet");
+        }
+        else
+        {
+            value = row->at(column_name);
+        }
+        full_row[column_name] = value;
     }
+    return full_row
 }
 
 Handle HeapTable::append(const ValueDict *row)
@@ -370,8 +382,27 @@ Dbt* HeapTable::marshal(const ValueDict *row)
 // !! not finish
 ValueDict* HeapTable::unmarshal(Dbt *data)
 {
-    for (auto const& column_name : this->column_names) {
+    map<Identifier, Value>* row = {};
+    uint offset = 0;
 
+    for (auto const& column_name : this->column_names) {
+        ColumnAttribute ca = this->column_attributes[col_num++];
+        if (ca.get_data_type() == ColumnAttribute::DataType::INT) 
+        {
+            // FIX ME
+            offset += 4;
+
+        } 
+        else if (ca.get_data_type() == ColumnAttribute::DataType::TEXT) 
+        {
+        
+        
+        
+        }
+        else{
+            // fix the second part
+            throw DbRelationError("Cannot unmarshal" + "column[data_type]");
+        }
 
 
 
