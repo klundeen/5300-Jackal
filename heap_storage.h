@@ -13,6 +13,7 @@
 #include "storage_engine.h"
 
 typedef u_int16_t u16;
+typedef u_int32_t u32;
 
 /**
  * @class SlottedPage - heap file implementation of DbBlock.
