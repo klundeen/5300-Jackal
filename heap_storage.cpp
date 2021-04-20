@@ -211,7 +211,13 @@ void HeapFile::db_open(uint flags)
     db.set_re_len(DbBlock::BLOCK_SZ);
     dbfilename = name + ".db";
     db.open(nullptr, dbfilename.c_str(), nullptr, DB_RECNO, flags, 0644);
-    // not sure how to deal with the flag
+    if (flags == 0) {
+        DB_BTREE_STAT stat;
+        this->db.stat(nullptr, &stat, DB_FAST_STAT);
+        this->last = stat.bt_ndata;
+    } else {
+        this->last = 0;
+    }
     closed = false;
 }
 
