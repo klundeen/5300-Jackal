@@ -230,6 +230,12 @@ HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttr
    // this->file = HeapFile(table_name);
 }
 */
+HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes) : DbRelation(table_name, column_names, column_attributes), file(table_name)
+{
+}
+
+
+
 void HeapTable::create()
 {
     this->file.create();
