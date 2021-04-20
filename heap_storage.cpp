@@ -177,7 +177,6 @@ SlottedPage* HeapFile::get_new(void) {
     return page;
 }
 
-
 // https://docs.oracle.com/cd/E17076_05/html/api_reference/CXX/dbget.html
 SlottedPage* HeapFile::get(BlockID block_id) {
     Dbt key(&block_id, sizeof(block_id));
@@ -201,8 +200,6 @@ BlockIDs* HeapFile::block_ids() {
     return sequence;
 }
 
-// protected
-// not finish !! need def for db
 void HeapFile::db_open(uint flags)
 {
     if (!closed) {
@@ -220,7 +217,6 @@ void HeapFile::db_open(uint flags)
     }
     closed = false;
 }
-
 
 // ===========================================Heaptable============================
 HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes) : DbRelation(table_name, column_names, column_attributes), file(table_name)
@@ -292,7 +288,6 @@ Handles* HeapTable::select()
 
 Handles* HeapTable::select(const ValueDict *where)
 {
-        
     // "Not milestone 2 for HeapTable"
     // FIX ME
     return nullptr;
@@ -303,7 +298,6 @@ ValueDict* HeapTable::project(Handle handle)
     // "Not milestone 2 for HeapTable"
     // FIX ME
     return nullptr;
-
 }
 
 ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names)
@@ -313,7 +307,6 @@ ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names)
     return nullptr;
 }
 
-// !!not finish****
 // protected
 ValueDict* HeapTable::validate(const ValueDict *row)
 {
@@ -323,7 +316,7 @@ ValueDict* HeapTable::validate(const ValueDict *row)
     {
         ColumnAttribute column = this->column_attributes[i++];
         Value value;
-        if(row->find(column_name) == row->end())//column.get_data_type() != ColumnAttribute::DataType::TEXT && column.get_data_type() != ColumnAttribute::DataType::INT)
+        if(row->find(column_name) == row->end())
         {
             throw DbRelationError("don't know how to handle NULLs, defaults, etc. yet");
         }
@@ -332,7 +325,6 @@ ValueDict* HeapTable::validate(const ValueDict *row)
             value = row->at(column_name);
         }
         full_row->insert(std::pair<Identifier, Value>(column_name, value));
-        //full_row[column_name] = value;
     }
     return full_row;
 }
@@ -387,7 +379,6 @@ Dbt* HeapTable::marshal(const ValueDict *row)
     return data;
 }
 
-// !! not finish
 ValueDict* HeapTable::unmarshal(Dbt *data) {
     std::map<Identifier, Value> *row = {};
     char *bytes = new char[DbBlock::BLOCK_SZ];

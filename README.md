@@ -42,6 +42,6 @@ SQL> test
 In heap_storage, HeapTable did not implement the following functions because it is not required for milestone 2.
 * virtual void update(const Handle handle, const ValueDict *new_values);
 * virtual void del(const Handle handle);
-* virtual Handles *select();
+* Handles* HeapTable::select(const ValueDict *where);
 * virtual ValueDict *project(Handle handle);
 * virtual ValueDict *project(Handle handle, const ColumnNames *column_names);

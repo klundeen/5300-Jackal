@@ -249,9 +249,13 @@ public:
     // "Not milestone 2 for HeapTable"
     virtual void del(const Handle handle);
 
-    // "Not milestone 2 for HeapTable"
+    /**
+     * Execute SELECT statement
+     * @return a list of handle for matched rows
+     */
     virtual Handles *select();
 
+    // "Not milestone 2 for HeapTable"
     virtual Handles *select(const ValueDict *where);
 
     // "Not milestone 2 for HeapTable"
@@ -259,10 +263,7 @@ public:
 
     // "Not milestone 2 for HeapTable"
     virtual ValueDict *project(Handle handle, const ColumnNames *column_names);
-/*
-    // for testing
-    bool test_heap_storage();
-*/
+
 protected:
     HeapFile file;
 
