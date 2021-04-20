@@ -5,7 +5,6 @@
 #include "storage_engine.h"
 using namespace std;
 
-typedef u_int16_t u16;
 
 // =============================slottedPage==================================
 SlottedPage::SlottedPage(Dbt &block, BlockID block_id, bool is_new) : DbBlock(block, block_id, is_new) {
