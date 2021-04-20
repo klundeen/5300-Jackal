@@ -12,6 +12,8 @@
 #include "db_cxx.h"
 #include "storage_engine.h"
 
+typedef u_int16_t u16;
+
 /**
  * @class SlottedPage - heap file implementation of DbBlock.
  *
@@ -108,7 +110,7 @@ protected:
 
     virtual void put_n(u16 offset, u16 n);
 
-    virtual void *address(u16 offset);
+    virtual void *address((u16) offset);
 };
 
 /**
