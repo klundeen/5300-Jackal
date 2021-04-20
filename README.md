@@ -29,6 +29,14 @@ You can pull the tag for Milestone 2
 ```
 $ git checkout tags/Milestone2
 ```
+To test the test_heap_storage() function
+```
+SQL> test
+```
+
+
+
+
 [Berkeley DB C++ API Reference](https://docs.oracle.com/cd/E17076_05/html/api_reference/CXX/frame_main.html) for db_cxx.h
 
 In heap_storage, HeapTable did not implement the following functions because it is not required for milestone 2.
