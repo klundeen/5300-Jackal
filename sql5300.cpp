@@ -1,346 +1,89 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <cstring>
+/**
+ * @file sql5300.cpp - main entry for the relation manager's SQL shell
+ * @author Kevin Lundeen
+ * @see "Seattle University, CPSC5300, Spring 2021"
+ */
+#include <cstdlib>
 #include <iostream>
 #include <string>
-#include <cassert>
 #include "db_cxx.h"
 #include "SQLParser.h"
-#include "sqlhelper.h"
-#include "heap_storage.h"
-#include "storage_engine.h"
+#include "ParseTreeToString.h"
+#include "SQLExec.h"
 
 using namespace std;
 using namespace hsql;
 
-DbEnv *_DB_ENV;
-
-// forward declare
-string convertOperatorToStr(const Expr *expr);
-string execCreate(const CreateStatement *stmt);
-string execSelect(const SelectStatement *stmt);
-string exec(const SQLStatement *stmt);
-string tableReftoString(const TableRef *table);
-string colDefToStr(const ColumnDefinition *d);
-string execInsert(const InsertStatement *stmt);
-string convertExpressionToStr(const Expr *expr);
-
-// TODO: below method didn't consider Ternary operators. And for unary operators, it only considers NOT so far
-/**
- * Convert operation expression to string
- * @param expr  operator expression to be converted
- * @return      SQL version of operator expression
+/*
+ * we allocate and initialize the _DB_ENV global
  */
-string convertOperatorToStr(const Expr *expr) {
-    if (expr == NULL) {
-        return "null";
-    }
+void initialize_environment(char *envHome);
 
-    string res;
-
-    if (expr->opType == Expr::NOT)
-        res += "NOT ";
-
-    res += convertExpressionToStr(expr->expr) + " ";
-
-    switch (expr->opType) {
-        case Expr::SIMPLE_OP:
-            res += expr->opChar;
-            break;
-        case Expr::NOT_EQUALS:
-            res += "!=";
-            break;
-        case Expr::LESS_EQ:
-            res += "<=";
-            break;
-        case Expr::GREATER_EQ:
-            res += ">=";
-            break;
-        case Expr::LIKE:
-            res += "LIKE";
-            break;
-        case Expr::NOT_LIKE:
-            res += "NOT_LIKE";
-            break;
-        case Expr::AND:
-            res += "AND";
-            break;
-        case Expr::OR:
-            res += "OR";
-            break;
-        case Expr::IN:
-            res += "IN";
-            break;
-        default:
-            break;
-    }
-
-    if (expr->expr2 != NULL) {
-        res += " " + convertExpressionToStr(expr->expr2);
-    }
-    return res;
-}
 
 /**
- * Execute a create statement
- *
- * @param stmt  a create statement to be executed
- * @return     a string representation of the SQL statement
+ * Main entry point of the sql5300 program
+ * @args dbenvpath  the path to the BerkeleyDB database environment
  */
-string execCreate(const CreateStatement *stmt) {
-    string res = "CREATE TABLE ";
+int main(int argc, char *argv[]) {
 
-    if (stmt->type != CreateStatement::kTable) {
-        return "Unsupported operation! Currently, only support create table";
-    }
-
-    // check whether the table already exists
-    if (stmt->ifNotExists) {
-        res += "IF NOT EXISTS ";
-    }
-
-    res += string(stmt->tableName) + " (";
-
-    bool addComma = false;
-
-    for (ColumnDefinition *col : *stmt->columns) {
-        if (addComma) {
-            res += ", ";
-        }
-        res += colDefToStr(col);
-        addComma = true;
-    }
-    res += ")";
-    return res;
-}
-
-/**
- * Execute a select statement
- *
- * @param stmt  a select statement to be executed
- * @return      a string representation of the SQL statement
- */
-string execSelect(const SelectStatement *stmt) {
-    string res = "SELECT ";
-    bool addComma = false;
-
-    for (Expr *expr : *stmt->selectList) {
-        if (addComma) {
-            res += ", ";
-        }
-        res += convertExpressionToStr(expr);
-        addComma = true;
-    }
-
-    res += " FROM " + tableReftoString(stmt->fromTable);
-    if (stmt->whereClause != NULL) {
-        res += " WHERE " + convertExpressionToStr(stmt->whereClause);
-    }
-
-    return res;
-}
-
-/**
- * Execute a insert statement
- *
- * @param stmt  sql statement to be executed
- * @returns     a string representation of the SQL statement
- */
-string execInsert(const InsertStatement *stmt) {
-    return "INSERT ";
-}
-
-/**
- * Execute a sql statement
- *
- * @param stmt  sql statement to be executed
- * @return      a string representation of the SQL statement
- */
-string exec(const SQLStatement *stmt) {
-    switch (stmt->type()) {
-        case kStmtSelect:
-            return execSelect((const SelectStatement *) stmt);
-        case kStmtCreate:
-            return execCreate((const CreateStatement *) stmt);
-        default:
-            return "Not supported operation";
-    }
-}
-
-/**
- * Convert the expression into SQL statement
- *
- * @param stmt  an expression 
- * @return      a transcribed formatted SQL statement
- */
-string convertExpressionToStr(const Expr *expr) {
-    string s = "";
-    switch (expr->type) {
-        case kExprOperator:
-            s += convertOperatorToStr(expr);
-            break;
-        case kExprColumnRef:
-            if (expr->table != NULL) {
-                s += string(expr->table) + ".";
-            }
-        case kExprLiteralString:
-            s += expr->name;
-            break;
-        case kExprLiteralFloat:
-            s += to_string(expr->fval);
-            break;
-        case kExprFunctionRef:
-            s += string(expr->name) + "?" + expr->expr->name;
-            break;
-        case kExprLiteralInt:
-            s += to_string(expr->ival);
-            break;
-        case kExprStar:
-            s += "*";
-            break;
-        default:
-            s += "?NotRecognize?";
-            break;
-    }
-
-    if (expr->alias != NULL) {
-        s += string(" AS ") + expr->alias;
-    }
-
-    return s;
-}
-
-/**
- * Convert table expression to sql statement
- * @param t    operator expression to be converted
- * @return     SQL version of operator expression
- */
-string tableReftoString(const TableRef *t) {
-    string s = "";
-    switch(t->type) {
-        case kTableSelect:
-            s += "kTableSelect";
-            break;
-        case kTableName:
-            s += t->name;
-            if(t->alias != NULL)
-                s += string(" AS ") + t->alias;
-            break;
-        case kTableJoin:
-            s += tableReftoString(t->join->left);
-            switch (t->join->type) {
-                case kJoinInner:
-                    s += " JOIN ";
-                    break;
-                case kJoinLeft:
-                    s += " LEFT JOIN ";
-                    break;
-                case kJoinRight:
-                    s += " RIGHT JOIN ";
-                    break;
-                case kJoinOuter:
-                case kJoinLeftOuter:
-                case kJoinRightOuter:
-                case kJoinCross:
-                case kJoinNatural:
-                    s += " NATURAL JOIN ";
-                    break;
-            }
-            s += tableReftoString(t->join->right);
-            if (t->join->condition != NULL)
-                s += " ON " + convertExpressionToStr(t->join->condition);
-            break;
-
-        case kTableCrossProduct:
-            bool comma = false;
-            for(TableRef *tbr : *t->list) {
-                if (comma)
-                    s += ", ";
-                s += tableReftoString(tbr);
-                comma = true; 
-            }
-            break;
-    }
-    return s;
-}
-
-/**
- * Convert column expression to type
- * @param cd  column expression to be converted
- * @return      corresponding type
- */
-string colDefToStr(const ColumnDefinition *cd)
-{
-    string s(cd->name);
-    switch (cd->type) {
-        case ColumnDefinition::INT:
-            s += " INT";
-            break;
-        case ColumnDefinition::DOUBLE:
-            s += " DOUBLE";
-            break;
-        case ColumnDefinition::TEXT:
-            s += " TEXT";
-            break;
-        default:
-            s += " ?TYPE?";
-            break;
-    }
-    return s;
-}
-
-int main(int len, char* args[]) {
-    if (len != 2) {
+    // Open/create the db environment
+    if (argc != 2) {
         cerr << "Usage: cpsc5300: dbenvpath" << endl;
-        return 1;
+        return EXIT_FAILURE;
     }
+    initialize_environment(argv[1]);
 
-    // create a BerkDB environment
-    char *directory = args[1];
-    cout << "sql5300 BerkDB environment is at " << directory << endl;
-
-    DbEnv env(0U);
-	env.set_message_stream(&cout);
-	env.set_error_stream(&cerr);
-
-    try {
-        env.open(directory, DB_CREATE | DB_INIT_MPOOL, 0);     
-    } catch (DbException &ex) {
-        cerr << "sql5300: " << ex.what() << endl;
-        exit(1);
-    }
-    _DB_ENV = &env;
-
+    // Enter the SQL shell loop
     while (true) {
-        // prompt SQL
         cout << "SQL> ";
-        string query = "";
+        string query;
         getline(cin, query);
-
-        if (query.length() == 0) 
-            continue; 
+        if (query.length() == 0)
+            continue;  // blank line -- just skip
         if (query == "quit")
-            break;
+            break;  // only way to get out
         if (query == "test") {
             cout << "test_heap_storage: " << (test_heap_storage() ? "ok" : "failed") << endl;
             continue;
         }
 
-        // parse
-        SQLParserResult *pr = SQLParser::parseSQLString(query);
-        if (!pr->isValid()) {
-            cout << "INVALID SQL: " << query << endl;
-            delete pr;
-            continue;
+        // parse and execute
+        SQLParserResult *parse = SQLParser::parseSQLString(query);
+        if (!parse->isValid()) {
+            cout << "invalid SQL: " << query << endl;
+            cout << parse->errorMsg() << endl;
+        } else {
+            for (uint i = 0; i < parse->size(); ++i) {
+                const SQLStatement *statement = parse->getStatement(i);
+                try {
+                    cout << ParseTreeToString::statement(statement) << endl;
+                    QueryResult *result = SQLExec::execute(statement);
+                    cout << *result << endl;
+                    delete result;
+                } catch (SQLExecError &e) {
+                    cout << "Error: " << e.what() << endl;
+                }
+            }
         }
-
-        for (uint i = 0; i < pr->size(); i++) {
-            cout << exec(pr->getStatement(i)) << endl;
-        }
-
-        delete pr;
+        delete parse;
     }
-
     return EXIT_SUCCESS;
 }
 
+DbEnv *_DB_ENV;
+
+void initialize_environment(char *envHome) {
+    cout << "(sql5300: running with database environment at " << envHome << ")" << endl;
+
+    DbEnv *env = new DbEnv(0U);
+    env->set_message_stream(&cout);
+    env->set_error_stream(&cerr);
+    try {
+        env->open(envHome, DB_CREATE | DB_INIT_MPOOL, 0);
+    } catch (DbException &exc) {
+        cerr << "(sql5300: " << exc.what() << ")" << endl;
+        exit(1);
+    }
+    _DB_ENV = env;
+    initialize_schema_tables();
+}

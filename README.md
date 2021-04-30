@@ -1,49 +1,29 @@
-# 5300-Jackal
+# 5300-Instructor
+Instructor's DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2021
 
-## Milestone 1: Skeleton -- Team: Tong Xu, Yinhui Li
-
-On cs1, clone the repo and build sql5300 by using Makefile
-```
-$ cd ~/cpsc5300
-$ git clone https://github.com/klundeen/5300-Jackal.git
-$ cd 5300-Jackal
-$ make
-```
-**Remember to have [Berkeley DB data](https://seattleu.instructure.com/courses/1597073/pages/getting-set-up-on-cs1?module_item_id=17258588) in your directory on cs1**
-```
+Usage (argument is database directory):
+<pre>
 $ ./sql5300 ~/cpsc5300/data
-```
+</pre>
 
-
-You can also pull the tag for Milestone 1
-```
-$ git checkout tags/Milestone1
-```
-
-
----
-
-## Milestone 2: Rudimentary Storage Engine -- Team: Tong Xu, Yinhui Li
-
-You can pull the tag for Milestone 2
-```
-$ git checkout tags/Milestone2
-```
-To test the test_heap_storage() function
-```
+## Tags
+- <code>Milestone1</code> is playing around with the AST returned by the HyLine parser and general setup of the command loop.
+- <code>Milestone2h</code> has the intructor-provided files for Milestone2. (Note that heap_storage.cpp is just a stub.)
+- <code>Milestone2</code> is the instructor's attempt to complete the Milestone 2 assignment.
+- <code>Milestone3_prep</code> has the instructor-provided files for Milestone 3. The students' work is in <code>SQLExec.cpp</code> labeled with <code>FIXME</code>.
+## Unit Tests
+There are some tests for SlottedPage and HeapTable. They can be invoked from the <code>SQL</code> prompt:
+```sql
 SQL> test
 ```
+Be aware that failed tests may leave garbage Berkeley DB files lingering in your data directory. If you don't care about any data in there, you are advised to just delete them all after a failed test.
+```sh
+$ rm -f data/*
+```
 
-**Here is the [handoff video](https://drive.google.com/file/d/1frwVYo8jejzql1D5VlK2CAGbtkM1DHKb/view?usp=sharing).Please contact us if you have any question.**
-
-
-[Berkeley DB C++ API Reference](https://docs.oracle.com/cd/E17076_05/html/api_reference/CXX/frame_main.html) for db_cxx.h
-
-In heap_storage, HeapTable did not implement the following functions because it is not required for milestone 2.
-* virtual void update(const Handle handle, const ValueDict *new_values);
-* virtual void del(const Handle handle);
-* Handles* HeapTable::select(const ValueDict *where);
-* virtual ValueDict *project(Handle handle);
-* virtual ValueDict *project(Handle handle, const ColumnNames *column_names);
-
----
+## Valgrind (Linux)
+To run valgrind (files must be compiled with <code>-ggdb</code>):
+```sh
+$ valgrind --leak-check=full --suppressions=valgrind.supp ./sql5300 data
+```
+Note that we've added suppression for the known issues with the Berkeley DB library <em>vis-à-vis</em> valgrind.
