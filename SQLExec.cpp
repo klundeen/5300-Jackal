@@ -66,8 +66,7 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
-void
-SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
+void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
     throw SQLExecError("not implemented");  // FIXME
 }
 
