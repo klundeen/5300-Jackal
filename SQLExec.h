@@ -96,7 +96,12 @@ protected:
      * @param column_name        returned by reference
      * @param column_attributes  returned by reference
      */
-    static void
-    column_definition(const hsql::ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute);
+    static void column_definition(const hsql::ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute);
+
+    static bool checkIfTableExists(const char* tableName);
+
+    static void checkIfColumnsExists(const std::vector<char*>* columns, const char* tableName);
+
+    static bool checkIfIndexExists(const char* tableName, const char* indexname);
 };
 

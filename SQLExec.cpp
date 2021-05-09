@@ -57,7 +57,6 @@ QueryResult::~QueryResult() {
     }
 }
 
-
 QueryResult *SQLExec::execute(const SQLStatement *statement) {
     // initialize _tables table, if not yet present
     if (SQLExec::tables == nullptr)
@@ -79,8 +78,7 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
-void
-SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
+void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
     column_name = col->name;
     switch (col->type) {
         case ColumnDefinition::INT:
@@ -159,7 +157,54 @@ QueryResult *SQLExec::create_table(const CreateStatement *statement) {
 }
 
 QueryResult *SQLExec::create_index(const CreateStatement *statement) {
-    return new QueryResult("create index not implemented");  // FIXME
+    if (statement->indexColumns == NULL) {
+        return new QueryResult("did not create index as index columns not specified");
+    }
+    Identifier table_name = statement->tableName;
+    ColumnNames column_names;
+    ColumnAttributes column_attributes;
+    Identifier column_name;
+    Identifier index_name = statement->indexName;
+    Identifier index_type = statement->indexType;
+    // bool is_unique = true;
+        
+    if (!checkIfTableExists(statement->tableName)) {
+        throw DbRelationError("table '" + string(statement->tableName) + "' does not exist");
+    }
+    if (checkIfIndexExists(statement->tableName, statement->indexName)) {
+        throw DbRelationError("table '" + string(statement->tableName) + "' already has index with name '" + statement->indexName + "'");
+    }
+    checkIfColumnsExists(statement->indexColumns, statement->tableName);
+
+    DbRelation &indexTable = SQLExec::tables->get_table(Indices::TABLE_NAME);
+    column_attributes = indexTable.get_column_attributes();
+    column_names = indexTable.get_column_names();
+
+    int seqNum = 1;
+    Handles c_handles;
+    try {
+        for (auto const &col : *statement->indexColumns) {
+            ValueDict row;
+            row["table_name"] = Value(table_name);
+            row["index_name"] = Value(index_name);
+            row["column_name"] = Value(col);
+            row["seq_in_index"] = Value(seqNum);
+            row["index_type"] = Value(index_type);
+            row["is_unique"] = Value(false);
+            c_handles.push_back(indexTable.insert(&row));
+            seqNum++;
+            // delete row;
+        }
+    } catch (exception &e) {
+        // attempt to remove from _index
+        try {
+            for (auto const &handle: c_handles)
+                indexTable.del(handle);
+        } catch (...) {}
+        throw;
+    }
+
+    return new QueryResult("created index " + index_name);
 }
 
 // DROP ...
@@ -179,6 +224,10 @@ QueryResult *SQLExec::drop_table(const DropStatement *statement) {
     if (table_name == Tables::TABLE_NAME || table_name == Columns::TABLE_NAME)
         throw SQLExecError("cannot drop a schema table");
 
+    if (!checkIfTableExists(statement->name)) {
+        throw DbRelationError("table '" + string(statement->name) + "' does not exist");
+    }
+    
     ValueDict where;
     where["table_name"] = Value(table_name);
 
@@ -203,8 +252,43 @@ QueryResult *SQLExec::drop_table(const DropStatement *statement) {
     return new QueryResult(string("dropped ") + table_name);
 }
 
+/*
+struct DropStatement : SQLStatement {
+    enum EntityType {
+        kTable,
+        kSchema,
+        kIndex,
+        kView,
+        kPreparedStatement
+    };
+
+    DropStatement(EntityType type);
+    virtual ~DropStatement();
+
+    EntityType type;
+    char* name;
+    char* indexName;
+};
+*/
+
 QueryResult *SQLExec::drop_index(const DropStatement *statement) {
-    return new QueryResult("drop index not implemented");  // FIXME
+    if (!checkIfTableExists(statement->name)) {
+        throw DbRelationError("table '" + string(statement->name) + "' does not exist");
+    }
+    if (!checkIfIndexExists(statement->name, statement->indexName)) {
+        throw DbRelationError("table '" + string(statement->name) + "' does not have index '" + statement->indexName + "'");
+    }
+
+    ValueDict where;
+    where["table_name"] = Value(statement->name);
+    DbRelation &indexTable = SQLExec::tables->get_table(Indices::TABLE_NAME);
+    Handles *handles = indexTable.select(&where);
+    for (auto const &handle: *handles) {
+        indexTable.del(handle); // expect only one row from select
+    }
+    delete handles;
+    
+    return new QueryResult("dropped index " + string(statement->indexName) + " in table '" + string(statement->name) + "'");  // FIXME
 }
 
 QueryResult *SQLExec::show(const ShowStatement *statement) {
@@ -220,8 +304,48 @@ QueryResult *SQLExec::show(const ShowStatement *statement) {
     }
 }
 
+/*
+struct ShowStatement : SQLStatement {
+    enum EntityType {
+        kTables,
+        kColumns,
+        kIndex
+    };
+
+    ShowStatement(EntityType type);
+    virtual ~ShowStatement();
+
+    EntityType type;
+    char* tableName; // default: NULL
+};
+*/
+
 QueryResult *SQLExec::show_index(const ShowStatement *statement) {
-    return new QueryResult("not implemented"); // FIXME
+    Identifier table_name = string(statement->tableName);
+    DbRelation &indexTable = SQLExec::tables->get_table(Indices::TABLE_NAME);
+
+    ColumnNames *column_names = new ColumnNames;
+    column_names->push_back("table_name");
+    column_names->push_back("index_name");
+    column_names->push_back("column_name");
+    column_names->push_back("seq_in_index");
+    column_names->push_back("index_type");
+    column_names->push_back("is_unique");
+    ColumnAttributes *column_attributes = new ColumnAttributes;
+    column_attributes->push_back(ColumnAttribute(ColumnAttribute::TEXT));
+
+    ValueDict where;
+    where["table_name"] = Value(table_name);
+    Handles *handles = indexTable.select(&where);
+    u_long n = handles->size();
+    
+    ValueDicts *rows = new ValueDicts;
+    for (auto const &handle: *handles) {
+        ValueDict *row = indexTable.project(handle, column_names);
+        rows->push_back(row);
+    }
+    delete handles;
+    return new QueryResult(column_names, column_attributes, rows, "successfully returned " + to_string(n) + " rows");
 }
 
 QueryResult *SQLExec::show_tables() {
@@ -247,7 +371,11 @@ QueryResult *SQLExec::show_tables() {
     return new QueryResult(column_names, column_attributes, rows, "successfully returned " + to_string(n) + " rows");
 }
 
-QueryResult *SQLExec::show_columns(const ShowStatement *statement) {
+QueryResult *SQLExec::show_columns(const ShowStatement *statement) {   
+    if (!checkIfTableExists(statement->tableName)) {
+        throw DbRelationError("table '" + string(statement->tableName) + "' does not exist");
+    }
+    
     DbRelation &columns = SQLExec::tables->get_table(Columns::TABLE_NAME);
 
     ColumnNames *column_names = new ColumnNames;
@@ -272,3 +400,60 @@ QueryResult *SQLExec::show_columns(const ShowStatement *statement) {
     return new QueryResult(column_names, column_attributes, rows, "successfully returned " + to_string(n) + " rows");
 }
 
+bool SQLExec::checkIfTableExists(const char* tableName) {
+    ValueDict where;
+    where["table_name"] = Value(tableName);
+    Handles *handles = SQLExec::tables->select(&where);
+    bool resp = handles->size() > 0;
+    
+    delete handles;
+
+    return resp;
+}
+
+void SQLExec::checkIfColumnsExists(const std::vector<char*>* columns, const char* tableName) {
+    DbRelation &columnTable = SQLExec::tables->get_table(Columns::TABLE_NAME);
+
+    ColumnNames *column_names = new ColumnNames;
+    column_names->push_back("table_name");
+    column_names->push_back("column_name");
+    column_names->push_back("data_type");
+
+
+    ValueDict where;
+    where["table_name"] = Value(tableName);
+    Handles *handles = columnTable.select(&where);
+    std::vector<Value> *tableColumnsFound = new std::vector<Value>();
+    for (auto const &handle: *handles) {
+        ValueDict *row = columnTable.project(handle, column_names);
+        tableColumnsFound->push_back(row->at("column_name"));
+    }
+
+    for (auto const &col: *columns) {
+        bool found = false;
+        string strCol = string(col);
+        for(const Value &tableCol: *tableColumnsFound) {
+            if (strCol.compare(tableCol.s) == 0) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            throw SQLExecError("column '" + strCol + "' does not exist for table '" + string(tableName)+ "'");
+        }
+    }
+
+    delete handles;
+}
+
+bool SQLExec::checkIfIndexExists(const char* tableName, const char* indexName) {
+    DbRelation &indexTable = SQLExec::tables->get_table(Indices::TABLE_NAME);
+    
+    ValueDict where;
+    where["table_name"] = Value(tableName);
+    where["index_name"] = Value(indexName);
+    Handles *duplicateCheck = indexTable.select(&where);
+    bool resp = duplicateCheck->size() > 0;
+    delete duplicateCheck;
+    return resp;
+}
