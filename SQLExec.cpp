@@ -163,7 +163,6 @@ QueryResult *SQLExec::create_index(const CreateStatement *statement) {
     Identifier table_name = statement->tableName;
     ColumnNames column_names;
     ColumnAttributes column_attributes;
-    Identifier column_name;
     Identifier index_name = statement->indexName;
     Identifier index_type = statement->indexType;
         
@@ -245,14 +244,11 @@ QueryResult *SQLExec::drop_table(const DropStatement *statement) {
     Handles *handles = columns.select(&where);
     for (auto const &handle: *handles)
         columns.del(handle);
-    delete handles;
 
     // remove all indices for the table
-    ValueDict where;
-    where["table_name"] = Value(statement->name);
     // get all the indices for the table
     DbRelation &indexTable = SQLExec::tables->get_table(Indices::TABLE_NAME);
-    Handles *handles = indexTable.select(&where);
+    handles = indexTable.select(&where);
     for (auto const &handle: *handles) {
         indexTable.del(handle); // expect only one row from select
     }
