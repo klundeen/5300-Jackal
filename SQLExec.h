@@ -98,10 +98,26 @@ protected:
      */
     static void column_definition(const hsql::ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute);
 
+    /**
+     * check if the provided table exists in metadata
+     * @param tableName  table name to check
+     * @returns          bool indicating if the provided table name exists
+     */
     static bool checkIfTableExists(const char* tableName);
 
+    /**
+     * check if the provided column names exist for the provided table
+     * @param columns    vector/list of char pointers that would be obtained as indexColumns from CreateStatement
+     * @param indexname  table name to check for
+     */
     static void checkIfColumnsExists(const std::vector<char*>* columns, const char* tableName);
-
+    
+    /**
+     * check if the provided index is created for the provided table
+     * @param tableName  table name to check for
+     * @param indexname  index name to check
+     * @returns          bool indicating if the provided index exists for table
+     */
     static bool checkIfIndexExists(const char* tableName, const char* indexname);
 };
 
