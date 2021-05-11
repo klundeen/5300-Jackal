@@ -65,13 +65,22 @@ public:
     static QueryResult *execute(const hsql::SQLStatement *statement);
 
 protected:
-    // the one place in the system that holds the _tables table
+    // the one place in the system that holds the _tables table and _indices table
     static Tables *tables;
+    static Indices *indices;
 
     // recursive decent into the AST
     static QueryResult *create(const hsql::CreateStatement *statement);
 
+    static QueryResult *create_table(const hsql::CreateStatement *statement);
+
+    static QueryResult *create_index(const hsql::CreateStatement *statement);
+
     static QueryResult *drop(const hsql::DropStatement *statement);
+
+    static QueryResult *drop_table(const hsql::DropStatement *statement);
+
+    static QueryResult *drop_index(const hsql::DropStatement *statement);
 
     static QueryResult *show(const hsql::ShowStatement *statement);
 
@@ -79,13 +88,36 @@ protected:
 
     static QueryResult *show_columns(const hsql::ShowStatement *statement);
 
+    static QueryResult *show_index(const hsql::ShowStatement *statement);
+
     /**
      * Pull out column name and attributes from AST's column definition clause
      * @param col                AST column definition
      * @param column_name        returned by reference
      * @param column_attributes  returned by reference
      */
-    static void
-    column_definition(const hsql::ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute);
+    static void column_definition(const hsql::ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute);
+
+    /**
+     * check if the provided table exists in metadata
+     * @param tableName  table name to check
+     * @returns          bool indicating if the provided table name exists
+     */
+    static bool checkIfTableExists(const char* tableName);
+
+    /**
+     * check if the provided column names exist for the provided table
+     * @param columns    vector/list of char pointers that would be obtained as indexColumns from CreateStatement
+     * @param indexname  table name to check for
+     */
+    static void checkIfColumnsExists(const std::vector<char*>* columns, const char* tableName);
+    
+    /**
+     * check if the provided index is created for the provided table
+     * @param tableName  table name to check for
+     * @param indexname  index name to check
+     * @returns          bool indicating if the provided index exists for table
+     */
+    static bool checkIfIndexExists(const char* tableName, const char* indexname);
 };
 
