@@ -2,9 +2,25 @@
 Instructor's DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2021
 
 Usage (argument is database directory):
-<pre>
-$ ./sql5300 ~/cpsc5300/data
-</pre>
+- For build:
+```
+5300-Jackal$ make
+g++ -I/usr/local/db6/include -std=c++11 -std=c++0x -Wall -Wno-c++11-compat -DHAVE_CXX_STDHEADERS -D_GNU_SOURCE -D_REENTRANT -O3 -c -ggdb -I../sql-parser/src -o "sql5300.o" "sql5300.cpp"
+g++ -I/usr/local/db6/include -std=c++11 -std=c++0x -Wall -Wno-c++11-compat -DHAVE_CXX_STDHEADERS -D_GNU_SOURCE -D_REENTRANT -O3 -c -ggdb -I../sql-parser/src -o "SlottedPage.o" "SlottedPage.cpp"
+g++ -I/usr/local/db6/include -std=c++11 -std=c++0x -Wall -Wno-c++11-compat -DHAVE_CXX_STDHEADERS -D_GNU_SOURCE -D_REENTRANT -O3 -c -ggdb -I../sql-parser/src -o "HeapFile.o" "HeapFile.cpp"
+g++ -I/usr/local/db6/include -std=c++11 -std=c++0x -Wall -Wno-c++11-compat -DHAVE_CXX_STDHEADERS -D_GNU_SOURCE -D_REENTRANT -O3 -c -ggdb -I../sql-parser/src -o "HeapTable.o" "HeapTable.cpp"
+g++ -I/usr/local/db6/include -std=c++11 -std=c++0x -Wall -Wno-c++11-compat -DHAVE_CXX_STDHEADERS -D_GNU_SOURCE -D_REENTRANT -O3 -c -ggdb -I../sql-parser/src -o "ParseTreeToString.o" "ParseTreeToString.cpp"
+g++ -I/usr/local/db6/include -std=c++11 -std=c++0x -Wall -Wno-c++11-compat -DHAVE_CXX_STDHEADERS -D_GNU_SOURCE -D_REENTRANT -O3 -c -ggdb -I../sql-parser/src -o "SQLExec.o" "SQLExec.cpp"
+g++ -I/usr/local/db6/include -std=c++11 -std=c++0x -Wall -Wno-c++11-compat -DHAVE_CXX_STDHEADERS -D_GNU_SOURCE -D_REENTRANT -O3 -c -ggdb -I../sql-parser/src -o "schema_tables.o" "schema_tables.cpp"
+g++ -I/usr/local/db6/include -std=c++11 -std=c++0x -Wall -Wno-c++11-compat -DHAVE_CXX_STDHEADERS -D_GNU_SOURCE -D_REENTRANT -O3 -c -ggdb -I../sql-parser/src -o "storage_engine.o" "storage_engine.cpp"
+g++ -L/usr/local/db6/lib -o sql5300 sql5300.o SlottedPage.o HeapFile.o HeapTable.o ParseTreeToString.o SQLExec.o schema_tables.o storage_engine.o -ldb_cxx -lsqlparser
+5300-Jackal$ 
+```
+- For executing
+```
+5300-Jackal$ ./sql5300 <path to the data folder>
+```
+-- The data folder must be created before and can be specified in absolute or relative path. Ex: `/home/user/data` or `./data`
 
 ## Tags
 - <code>Milestone1</code> is playing around with the AST returned by the HyLine parser and general setup of the command loop.
@@ -13,6 +29,7 @@ $ ./sql5300 ~/cpsc5300/data
 - <code>Milestone3_prep</code> has the instructor-provided files for Milestone 3. The students' work is in <code>SQLExec.cpp</code> labeled with <code>FIXME</code>.
 - <code>Milestone3</code> has the instructor's attempt to complete the Milestone 3 assignment.
 - <code>Milestone4_prep</code> has the instructor-provided files for Milestone4 (this was all actually in Milestone3, too, by mistake).
+- <code>Milestone4</code> has our implementation of the indexing.
 ## Unit Tests
 There are some tests for SlottedPage and HeapTable. They can be invoked from the <code>SQL</code> prompt:
 ```sql
@@ -29,3 +46,10 @@ To run valgrind (files must be compiled with <code>-ggdb</code>):
 $ valgrind --leak-check=full --suppressions=valgrind.supp ./sql5300 data
 ```
 Note that we've added suppression for the known issues with the Berkeley DB library <em>vis-à-vis</em> valgrind.
+
+## Handoff:
+- Milestone 3 should be completely off of Professor Lundeens' implementation. Operations like `create table ...`, `drop table ...` should have some safety check to ensure that specified table exist.
+- Milestone 4 should be fully working as well. Refer to the Valgrind report.
+
+
+

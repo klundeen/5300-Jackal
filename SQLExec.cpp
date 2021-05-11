@@ -45,6 +45,9 @@ ostream &operator<<(ostream &out, const QueryResult &qres) {
     return out;
 }
 
+/**
+ * Cleanup method for the QueryResult
+ */
 QueryResult::~QueryResult() {
     if (column_names != nullptr)
         delete column_names;
@@ -57,6 +60,11 @@ QueryResult::~QueryResult() {
     }
 }
 
+/**
+ * Execute the given SQL statement.
+ * @param statement   the Hyrise AST of the SQL statement to execute
+ * @returns           the query result (freed by caller)
+ */
 QueryResult *SQLExec::execute(const SQLStatement *statement) {
     // initialize _tables table, if not yet present
     if (SQLExec::tables == nullptr)
@@ -78,6 +86,12 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
+/**
+ * Pull out column name and attributes from AST's column definition clause
+ * @param col                AST column definition
+ * @param column_name        returned by reference
+ * @param column_attributes  returned by reference
+ */
 void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
     column_name = col->name;
     switch (col->type) {
@@ -93,6 +107,11 @@ void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_
     }
 }
 
+/**
+ * Creates the specified table with provided columns in statement
+ * @param statement     statement with table to create with specified columns
+ * @return QueryResult  The result of the create query
+ */
 QueryResult *SQLExec::create(const CreateStatement *statement) {
     switch (statement->type) {
         case CreateStatement::kTable:
@@ -104,6 +123,11 @@ QueryResult *SQLExec::create(const CreateStatement *statement) {
     }
 }
 
+/**
+ * Creates the specified table with provided columns in statement
+ * @param statement     statement with table to create with specified columns
+ * @return QueryResult  The result of the create query
+ */
 QueryResult *SQLExec::create_table(const CreateStatement *statement) {
     Identifier table_name = statement->tableName;
     ColumnNames column_names;
@@ -156,6 +180,11 @@ QueryResult *SQLExec::create_table(const CreateStatement *statement) {
     return new QueryResult("created " + table_name);
 }
 
+/**
+ * Creates the specified index for the provided table name in statement
+ * @param statement     statement with index to create with specified table
+ * @return QueryResult  The result of the create query
+ */
 QueryResult *SQLExec::create_index(const CreateStatement *statement) {
     if (statement->indexColumns == NULL) {
         return new QueryResult("did not create index as index columns not specified");
@@ -210,7 +239,11 @@ QueryResult *SQLExec::create_index(const CreateStatement *statement) {
     return new QueryResult("created index " + index_name);
 }
 
-// DROP ...
+/**
+ * Drop the specified table name or index
+ * @param statement     statement with table name/index to drop
+ * @return QueryResult  The result of the drop query
+ */
 QueryResult *SQLExec::drop(const DropStatement *statement) {
     switch (statement->type) {
         case DropStatement::kTable:
@@ -222,6 +255,11 @@ QueryResult *SQLExec::drop(const DropStatement *statement) {
     }
 }
 
+/**
+ * Drop the specified table name or index
+ * @param statement     statement with table name to drop
+ * @return QueryResult  The result of the drop query
+ */
 QueryResult *SQLExec::drop_table(const DropStatement *statement) {
     Identifier table_name = statement->name;
     // ensure user is not dropping any metadata tables
@@ -242,15 +280,16 @@ QueryResult *SQLExec::drop_table(const DropStatement *statement) {
     // remove from _columns schema
     DbRelation &columns = SQLExec::tables->get_table(Columns::TABLE_NAME);
     Handles *handles = columns.select(&where);
-    for (auto const &handle: *handles)
+    for (auto const &handle: *handles) {
         columns.del(handle);
+    }
 
     // remove all indices for the table
     // get all the indices for the table
     DbRelation &indexTable = SQLExec::tables->get_table(Indices::TABLE_NAME);
     handles = indexTable.select(&where);
     for (auto const &handle: *handles) {
-        indexTable.del(handle); // expect only one row from select
+        indexTable.del(handle);
     }
     delete handles;
 
@@ -265,6 +304,11 @@ QueryResult *SQLExec::drop_table(const DropStatement *statement) {
     return new QueryResult(string("dropped ") + table_name);
 }
 
+/**
+ * Drop the specified index
+ * @param statement     statement with index to drop
+ * @return QueryResult  The result of the drop query
+ */
 QueryResult *SQLExec::drop_index(const DropStatement *statement) {
     // check if table exists and return error if not
     if (!checkIfTableExists(statement->name)) {
@@ -290,6 +334,10 @@ QueryResult *SQLExec::drop_index(const DropStatement *statement) {
     return new QueryResult("dropped index " + string(statement->indexName) + " in table '" + string(statement->name) + "'");  // FIXME
 }
 
+/**
+ * Internal method for show statement, shall call show columns, table, index...
+ * @return QueryResult  The result of the show query
+ */
 QueryResult *SQLExec::show(const ShowStatement *statement) {
     switch (statement->type) {
         case ShowStatement::kTables:
@@ -303,6 +351,11 @@ QueryResult *SQLExec::show(const ShowStatement *statement) {
     }
 }
 
+/**
+ * Display all the availalbe indexes for the provided table name
+ * @param statement     state with table name to get index
+ * @return QueryResult  The result of the show index query
+ */
 QueryResult *SQLExec::show_index(const ShowStatement *statement) {
     Identifier table_name = string(statement->tableName);
     // get index table pointer
@@ -335,6 +388,10 @@ QueryResult *SQLExec::show_index(const ShowStatement *statement) {
     return new QueryResult(column_names, column_attributes, rows, "successfully returned " + to_string(n) + " rows");
 }
 
+/**
+ * Shows all current tables in DB
+ * @return QueryResult  The result of the show columns query
+ */
 QueryResult *SQLExec::show_tables() {
     ColumnNames *column_names = new ColumnNames;
     column_names->push_back("table_name");
@@ -358,6 +415,11 @@ QueryResult *SQLExec::show_tables() {
     return new QueryResult(column_names, column_attributes, rows, "successfully returned " + to_string(n) + " rows");
 }
 
+/**
+ * Shows all columns for the provided table name
+ * @param statement     statement with table name
+ * @return QueryResult  The result of the show columns query
+ */
 QueryResult *SQLExec::show_columns(const ShowStatement *statement) {   
     if (!checkIfTableExists(statement->tableName)) {
         throw DbRelationError("table '" + string(statement->tableName) + "' does not exist");
@@ -387,6 +449,11 @@ QueryResult *SQLExec::show_columns(const ShowStatement *statement) {
     return new QueryResult(column_names, column_attributes, rows, "successfully returned " + to_string(n) + " rows");
 }
 
+/**
+ * check if the provided table exists in metadata
+ * @param tableName  table name to check
+ * @returns          bool indicating if the provided table name exists
+ */
 bool SQLExec::checkIfTableExists(const char* tableName) {
     // setup query to see if table exists
     ValueDict where;
@@ -399,6 +466,11 @@ bool SQLExec::checkIfTableExists(const char* tableName) {
     return resp;
 }
 
+/**
+ * check if the provided column names exist for the provided table
+ * @param columns    vector/list of char pointers that would be obtained as indexColumns from CreateStatement
+ * @param indexname  table name to check for
+ */
 void SQLExec::checkIfColumnsExists(const std::vector<char*>* columns, const char* tableName) {
     // get column table pointer
     DbRelation &columnTable = SQLExec::tables->get_table(Columns::TABLE_NAME);
@@ -437,6 +509,12 @@ void SQLExec::checkIfColumnsExists(const std::vector<char*>* columns, const char
     delete handles;
 }
 
+/**
+ * check if the provided index is created for the provided table
+ * @param tableName  table name to check for
+ * @param indexname  index name to check
+ * @returns          bool indicating if the provided index exists for table
+ */
 bool SQLExec::checkIfIndexExists(const char* tableName, const char* indexName) {
     // get pointer to the index table
     DbRelation &indexTable = SQLExec::tables->get_table(Indices::TABLE_NAME);

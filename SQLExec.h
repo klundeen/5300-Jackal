@@ -70,24 +70,72 @@ protected:
     static Indices *indices;
 
     // recursive decent into the AST
+    /**
+     * Creates the specified table with provided columns in statement
+     * @param statement     statement with table to create with specified columns
+     * @return QueryResult  The result of the create query
+     */
     static QueryResult *create(const hsql::CreateStatement *statement);
 
+    /**
+     * Creates the specified table with provided columns in statement
+     * @param statement     statement with table to create with specified columns
+     * @return QueryResult  The result of the create query
+     */
     static QueryResult *create_table(const hsql::CreateStatement *statement);
-
+    
+    /**
+     * Creates the specified index for the provided table name in statement
+     * @param statement     statement with index to create with specified table
+     * @return QueryResult  The result of the create query
+     */
     static QueryResult *create_index(const hsql::CreateStatement *statement);
 
+    /**
+     * Drop the specified table name or index
+     * @param statement     statement with table name/index to drop
+     * @return QueryResult  The result of the drop query
+     */
     static QueryResult *drop(const hsql::DropStatement *statement);
 
+    /**
+     * Drop the specified table name or index
+     * @param statement     statement with table name to drop
+     * @return QueryResult  The result of the drop query
+     */
     static QueryResult *drop_table(const hsql::DropStatement *statement);
 
+    /**
+     * Drop the specified index
+     * @param statement     statement with index to drop
+     * @return QueryResult  The result of the drop query
+     */
     static QueryResult *drop_index(const hsql::DropStatement *statement);
 
+    /**
+     * Internal method for show statement, shall call show columns, table, index...
+     * @return QueryResult  The result of the show query
+     */
     static QueryResult *show(const hsql::ShowStatement *statement);
 
+    /**
+     * Shows all current tables in DB
+     * @return QueryResult  The result of the show columns query
+     */
     static QueryResult *show_tables();
 
+    /**
+     * Shows all columns for the provided table name
+     * @param statement     statement with table name
+     * @return QueryResult  The result of the show columns query
+     */
     static QueryResult *show_columns(const hsql::ShowStatement *statement);
 
+    /**
+     * Display all the availalbe indexes for the provided table name
+     * @param statement     state with table name to get index
+     * @return QueryResult  The result of the show index query
+     */
     static QueryResult *show_index(const hsql::ShowStatement *statement);
 
     /**
