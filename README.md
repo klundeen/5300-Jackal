@@ -1,5 +1,5 @@
 # 5300-Jackal
-Instructor's DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2021
+5300-Jackal's DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2021
 
 Usage (argument is database directory):
 - For build:
