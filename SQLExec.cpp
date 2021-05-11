@@ -284,6 +284,8 @@ QueryResult *SQLExec::drop_table(const DropStatement *statement) {
         columns.del(handle);
     }
 
+    delete handles;
+    
     // remove all indices for the table
     // get all the indices for the table
     DbRelation &indexTable = SQLExec::tables->get_table(Indices::TABLE_NAME);
