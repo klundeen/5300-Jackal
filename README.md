@@ -20,7 +20,7 @@ g++ -L/usr/local/db6/lib -o sql5300 sql5300.o SlottedPage.o HeapFile.o HeapTable
 ```
 5300-Jackal$ ./sql5300 <path to the data folder>
 ```
--- The data folder must be created before and can be specified in absolute or relative path. Ex: `/home/user/data` or `./data`
+-- The data folder must be created before and can be specified in absolute or relative path. Ex: `./sql5300 /home/user/data` or `./sql5300 ./data`
 
 ## Tags
 - <code>Milestone1</code> is playing around with the AST returned by the HyLine parser and general setup of the command loop.
@@ -49,7 +49,7 @@ Note that we've added suppression for the known issues with the Berkeley DB libr
 
 ## Handoff:
 - Milestone 3 should be completely off of Professor Lundeens' implementation. Operations like `create table ...`, `drop table ...` should have some safety check to ensure that specified table exist.
-- Milestone 4 should be fully working as well. Refer to the Valgrind report.
+- Milestone 4 should be fully working as well. However, there are some lost bytes according to the Valgrind report when dropping a table with Kevin's implementation. 
 
 
 
