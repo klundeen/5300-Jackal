@@ -51,5 +51,9 @@ Note that we've added suppression for the known issues with the Berkeley DB libr
 - Milestone 3 should be completely off of Professor Lundeens' implementation. Operations like `create table ...`, `drop table ...` should have some safety check to ensure that specified table exist.
 - Milestone 4 should be fully working as well. However, there are some lost bytes according to the Valgrind report when dropping a table with Kevin's implementation. 
 
+### Video and Demo:
+https://seattleu.instructuremedia.com/embed/47c4feec-3c38-461a-baa0-979ed6418c0b
 
+## Other:
+Created a ".gitignore" file where we specifyied the "data" folder to make sure the db files created are not committed.
 
