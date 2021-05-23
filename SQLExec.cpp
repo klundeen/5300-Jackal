@@ -4,6 +4,7 @@
  * @see "Seattle University, CPSC5300, Spring 2021"
  */
 #include "SQLExec.h"
+#include "EvalPlan.h"
 
 using namespace std;
 using namespace hsql;
@@ -97,7 +98,21 @@ QueryResult *SQLExec::del(const DeleteStatement *statement) {
 }
 
 QueryResult *SQLExec::select(const SelectStatement *statement) {
-    return new QueryResult("SELECT statement not yet implemented");  // FIXME
+    // obtain the table based on table name
+    Identifier table_name = statement->fromTable->name;
+    DbRelation &table = tables->get_table(table_name);
+
+    // make the evaluation plan
+    EvalPlan *plan = new EvalPlan(table);
+
+    
+
+
+    // optimize plan and execute it
+    EvalPlan *optimized_plan = plan->optimize();
+    ValueDicts *res = optimized_plan->evaluate();
+
+    return new QueryResult();
 }
 
 void
