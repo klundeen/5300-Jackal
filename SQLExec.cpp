@@ -97,6 +97,11 @@ QueryResult *SQLExec::del(const DeleteStatement *statement) {
     return new QueryResult("DELETE statement not yet implemented");  // FIXME
 }
 
+ValueDict *get_where_conjuncion(const Expr *expr) {
+    ValueDict *ret = new ValueDict;
+    return ret;
+}
+
 QueryResult *SQLExec::select(const SelectStatement *statement) {
     // obtain the table based on table name
     Identifier table_name = statement->fromTable->name;
@@ -105,8 +110,28 @@ QueryResult *SQLExec::select(const SelectStatement *statement) {
     // make the evaluation plan
     EvalPlan *plan = new EvalPlan(table);
 
-    
+    // TODO: check whether the joins part exist in statement
+    if (statement->fromTable->join != nullptr) {
 
+    }
+
+    if (statement->whereClause != nullptr) {
+        plan = new EvalPlan(get_where_conjuncion(statement->whereClause), plan);
+    }
+
+    ColumnNames *projected_column_names = new ColumnNames;
+    ColumnAttributes *projected_column_attributes = new ColumnAttributes;
+    if (statement->selectList->at(0)->type == kExprStar) {
+        *projected_column_names = table.get_column_names();
+        *projected_column_attributes = table.get_column_attributes();
+        plan = new EvalPlan(EvalPlan::ProjectAll, plan);
+    } else {
+        for (int i = 0; i < statement->selectList->size(); i++) {
+            projected_column_names->push_back(Identifier(statement->selectList->at(i)->name));
+        }
+        *projected_column_attributes = *table.get_column_attributes(*projected_column_names);
+        plan = new EvalPlan(projected_column_names, plan);
+    }
 
     // optimize plan and execute it
     EvalPlan *optimized_plan = plan->optimize();
