@@ -89,12 +89,83 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
-QueryResult *SQLExec::insert(const InsertStatement *statement) {
-    return new QueryResult("INSERT statement not yet implemented");  // FIXME
+
+QueryResult* SQLExec::insert(const InsertStatement* statement) {
+
+	Identifier table_name = statement->tableName;
+
+	// get values from the statement
+	ColumnNames cns;
+	for (auto const& col_name : *statement->columns) {
+		cns.push_back(col_name);
+	}
+
+	// get values from the statement
+	std::vector<Value> values;
+	for (auto const& value_expr : *statement->values) {
+		switch (value_expr->type) {
+		case kExprLiteralString:
+			values.push_back(Value(value_expr->name));
+			break;
+		case kExprLiteralInt:
+			values.push_back(Value(value_expr->ival));
+			break;
+		default:
+			cout << "column value not supported except INT and STRING" << endl;
+			break;
+		}
+	}
+
+	// construct a row to insert into the table
+	ValueDict row;
+	Identifier column_name;
+	Value column_value;
+
+	for (size_t i = 0; i < statement->columns->size(); i++) {
+		column_name = cns.at(i);
+		column_value = values.at(i);
+		row[column_name] = column_value;
+	}
+
+	// get the table
+	DbRelation& table = SQLExec::tables->get_table(table_name);
+
+	// insert the row into the table
+	table.insert(&row);
+
+	// get the number of index
+	// Segmentation fault: 11
+	// FIXME
+	int n = 0;
+	/***************************
+	for (auto const &index_name: SQLExec::indices->get_index_names(table_name)) {
+		n++;
+	}
+	 ****************************/
+
+	return new QueryResult("successfully inserted 1 row into " + table_name + " and " + to_string(n) + " indices");  // FIXME
 }
 
-QueryResult *SQLExec::del(const DeleteStatement *statement) {
-    return new QueryResult("DELETE statement not yet implemented");  // FIXME
+QueryResult* SQLExec::del(const DeleteStatement* statement) {
+	Identifier table_name = statement->tableName;
+
+	// get the table
+	DbRelation& table = SQLExec::tables->get_table(table_name);
+
+	// tablescan
+	EvalPlan* plan = new EvalPlan(table);
+
+	// enclose that in a select if we have a where clause
+	ValueDict row = get_where_conjunction(statement->expr);
+	cout << "final row size: " << row.size() << endl;
+	for (auto& t : row) {
+		cout << t.first << endl;
+		cout << t.second.n << endl;
+		cout << t.second.s << endl;
+	}
+
+
+	return new QueryResult("DELETE statement not yet implemented");  // FIXME
 }
 
 ValueDict *get_where_conjuncion(const Expr *expr) {
