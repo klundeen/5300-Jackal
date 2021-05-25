@@ -89,71 +89,12 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
-<<<<<<< Updated upstream
-
-QueryResult* SQLExec::insert(const InsertStatement* statement) {
-
-	Identifier table_name = statement->tableName;
-
-	// get values from the statement
-	ColumnNames cns;
-	for (auto const& col_name : *statement->columns) {
-		cns.push_back(col_name);
-	}
-
-	// get values from the statement
-	std::cout << "getting values" << endl;
-	std::vector<Value> values;
-	for (auto const& value_expr : *statement->values) {
-		switch (value_expr->type) {
-		case kExprLiteralString:
-			values.push_back(Value(value_expr->name));
-			break;
-		case kExprLiteralInt:
-			values.push_back(Value(value_expr->ival));
-			break;
-		default:
-			cout << "column value not supported except INT and STRING" << endl;
-			break;
-		}
-	}
-
-	
-	// construct a row to insert into the table
-	std::cout << "construct row" << endl;
-	ValueDict row;
-	Identifier column_name;
-	Value column_value;
-
-	for (size_t i = 0; i < statement->columns->size(); i++) {
-		column_name = cns.at(i);
-		column_value = values.at(i);
-		row[column_name] = column_value;
-	}
-
-	// get the table
-	DbRelation& table = SQLExec::tables->get_table(table_name);
-
-	// insert the row into the table
-	table.insert(&row);
-
-	// get the number of index
-	std::cout << "getting index" << endl;
-	Handle insert_handle = table.insert(&row);
-	IndexNames idxn = SQLExec::indices->get_index_names(table_name);
-	for(Identifier name : idxn){
-		DbIndex& idx = SQLExec::indices->get_index(table_name, name);
-		idx.insert(insert_handle);
-
-	}
-	return new QueryResult("successfully inserted 1 row into " + table_name + " and " + to_string(idxn.size()) + " indices");  // FIXME
-=======
 QueryResult *SQLExec::insert(const InsertStatement *statement) {
-	Identifier table_name = statement->tableName;
-	DbRelation& table = SQLExec::tables->get_table(table_name);
+	Identifier tbn = statement->tableName;
+	DbRelation& table = SQLExec::tables->get_table(tbn);
 	
-	ColumnNames column_names;
-	ColumnAttributes column_attributes;
+	ColumnNames cln;
+	ColumnAttributes cla;
 	
 	ValueDict row;
 	
@@ -161,23 +102,23 @@ QueryResult *SQLExec::insert(const InsertStatement *statement) {
 	
 	if(statement->columns != nullptr){
 		for (auto const column : *statement->columns){
-			column_names.push_back(column);
+			cln.push_back(column);
 		}
 	}
 	else{
 		for (auto const column: table.get_column_names()){
-        	    column_names.push_back(column);
+        	    cln.push_back(column);
 		}
 	}
 	
 	for (auto const& column : *statement->values){
             switch(column->type){
            	 case kExprLiteralString:
-                	row[column_names[index]] = Value(column->name);
+                	row[cln[index]] = Value(column->name);
                 	index++;
                		 break;
             	case kExprLiteralInt:
-                	row[column_names[index]] = Value(column->ival);
+                	row[cln[index]] = Value(column->ival);
                		 index++;
                		 break;
           	  default:
@@ -186,15 +127,13 @@ QueryResult *SQLExec::insert(const InsertStatement *statement) {
 	}
     
 	Handle insert_handle = table.insert(&row);
-        IndexNames index_names = SQLExec::indices->get_index_names(table_name);
-        for(Identifier name : index_names){
-            DbIndex& index = SQLExec::indices->get_index(table_name, name);
+        IndexNames idxn = SQLExec::indices->get_index_names(tbn);
+        for(Identifier name : idxn){
+            DbIndex& index = SQLExec::indices->get_index(tbn, name);
             index.insert(insert_handle);
     }
 
-    return new QueryResult("Successfully inserted 1 row into " + table_name + " and " + to_string(index_names.size()) + " indices");
-
->>>>>>> Stashed changes
+    return new QueryResult("Successfully inserted 1 row into " + tbn + " and " + to_string(idxn.size()) + " indices");
 }
 
 /*
