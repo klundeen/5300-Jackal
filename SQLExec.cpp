@@ -77,8 +77,8 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
                 return show((const ShowStatement *) statement);
             case kStmtInsert:
                 return insert((const InsertStatement *) statement);
-            case kStmtDelete:
-                return del((const DeleteStatement *) statement);
+//            case kStmtDelete:
+//                return del((const DeleteStatement *) statement);
             case kStmtSelect:
                 return select((const SelectStatement *) statement);
             default:
@@ -101,6 +101,7 @@ QueryResult* SQLExec::insert(const InsertStatement* statement) {
 	}
 
 	// get values from the statement
+	std::cout << "getting values" << endl;
 	std::vector<Value> values;
 	for (auto const& value_expr : *statement->values) {
 		switch (value_expr->type) {
@@ -116,7 +117,9 @@ QueryResult* SQLExec::insert(const InsertStatement* statement) {
 		}
 	}
 
+	
 	// construct a row to insert into the table
+	std::cout << "construct row" << endl;
 	ValueDict row;
 	Identifier column_name;
 	Value column_value;
@@ -134,18 +137,18 @@ QueryResult* SQLExec::insert(const InsertStatement* statement) {
 	table.insert(&row);
 
 	// get the number of index
-	// Segmentation fault: 11
-	// FIXME
-	int n = 0;
-	/***************************
-	for (auto const &index_name: SQLExec::indices->get_index_names(table_name)) {
-		n++;
-	}
-	 ****************************/
+	std::cout << "getting index" << endl;
+	Handle insert_handle = table.insert(&row);
+	IndexNames idxn = SQLExec::indices->get_index_names(table_name);
+	for(Identifier name : idxn){
+		DbIndex& idx = SQLExec::indices->get_index(table_name, name);
+		idx.insert(insert_handle);
 
-	return new QueryResult("successfully inserted 1 row into " + table_name + " and " + to_string(n) + " indices");  // FIXME
+	}
+	return new QueryResult("successfully inserted 1 row into " + table_name + " and " + to_string(idxn.size()) + " indices");  // FIXME
 }
 
+/*
 QueryResult* SQLExec::del(const DeleteStatement* statement) {
 	Identifier table_name = statement->tableName;
 
@@ -167,7 +170,7 @@ QueryResult* SQLExec::del(const DeleteStatement* statement) {
 
 	return new QueryResult("DELETE statement not yet implemented");  // FIXME
 }
-
+*/
 ValueDict *get_where_conjuncion(const Expr *expr) {
     ValueDict *ret = new ValueDict;
     return ret;
