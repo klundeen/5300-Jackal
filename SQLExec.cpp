@@ -146,31 +146,84 @@ QueryResult* SQLExec::insert(const InsertStatement* statement) {
 	return new QueryResult("successfully inserted 1 row into " + table_name + " and " + to_string(n) + " indices");  // FIXME
 }
 
+ValueDict *get_where_conjuncion(const Expr *expr, const ColumnNames *col_names) {
+    if (expr->type != kExprOperator) {
+        throw DbRelationError("Operator is not supported");
+    }
+    ValueDict *res = new ValueDict;
+    switch (expr->opType) {
+        case Expr::AND: {
+            ValueDict *rows = get_where_conjuncion(expr->expr, col_names);
+            if (res != nullptr) {
+                res->insert(rows->begin(), rows->end());
+            }
+            rows = get_where_conjuncion(expr->expr2, col_names);
+            res->insert(rows->begin(), rows->end());
+            break;
+        }
+        case Expr::SIMPLE_OP: {
+            if (expr->opChar != '=') {
+                throw DbRelationError("Only equality predicates supported so far");
+            }
+            Identifier col = expr->expr->name;
+            if (find(col_names->begin(), col_names->end(), col) == col_names->end()) {
+                throw DbRelationError(col + " doesn't exist");
+            }
+            if (expr->expr2->type == kExprLiteralString) {
+                res->insert(pair<Identifier, Value>(col, Value(expr->expr2->name)));
+            } else if (expr->expr2->type == kExprLiteralInt) {
+                res->insert(pair<Identifier, Value>(col, Value(expr->expr2->ival)));
+            } else {
+                throw DbRelationError("Unsupported type");
+            }
+            break;
+        }
+        default:
+            throw DbRelationError("only and predicate is supported so far");
+    }
+
+    return res;
+}
+
 QueryResult* SQLExec::del(const DeleteStatement* statement) {
 	Identifier table_name = statement->tableName;
 
 	// get the table
 	DbRelation& table = SQLExec::tables->get_table(table_name);
-
+     
 	// tablescan
 	EvalPlan* plan = new EvalPlan(table);
 
-	// enclose that in a select if we have a where clause
-	ValueDict row = get_where_conjunction(statement->expr);
-	cout << "final row size: " << row.size() << endl;
-	for (auto& t : row) {
-		cout << t.first << endl;
-		cout << t.second.n << endl;
-		cout << t.second.s << endl;
-	}
+    ColumnNames column_names;
+    for (auto const column : table.get_column_names()) {
+        column_names.push_back(column);
+    }
 
+    ValueDict *where = new ValueDict;
+    if (statement->expr != NULL) {
+        where = get_where_conjuncion(statement->expr, &column_names);
+    }
 
-	return new QueryResult("DELETE statement not yet implemented");  // FIXME
-}
+    plan = new EvalPlan(where, plan);
+    EvalPlan *optimized_plan = plan->optimize();
+    EvalPipeline pipeline = optimized_plan->pipeline();
+    Handles *handles = pipeline.second;
 
-ValueDict *get_where_conjuncion(const Expr *expr) {
-    ValueDict *ret = new ValueDict;
-    return ret;
+    auto index_names = indices->get_index_names(table_name);
+    unsigned int handle_size = handles->size();
+    unsigned int index_size = index_names.size();
+    for (auto const &handle : *handles) {
+        for (unsigned int i = 0; i < index_names.size(); i++) {
+            DbIndex &index = indices->get_index(table_name,index_names[i]);
+            index.del(handle);
+        }
+    }
+
+    for (auto const& handle : *handles) {
+        table.del(handle);
+    }
+    delete where;
+    return new QueryResult("deleted " + to_string(handle_size) + " rows and " + to_string(index_size) + " indices from " + table_name);
 }
 
 QueryResult *SQLExec::select(const SelectStatement *statement) {
@@ -186,8 +239,13 @@ QueryResult *SQLExec::select(const SelectStatement *statement) {
 
     }
 
+    ColumnNames column_names;
+
+    for (auto const column: table.get_column_names()){
+        column_names.push_back(column);
+    }
     if (statement->whereClause != nullptr) {
-        plan = new EvalPlan(get_where_conjuncion(statement->whereClause), plan);
+        plan = new EvalPlan(get_where_conjuncion(statement->whereClause, &column_names), plan);
     }
 
     ColumnNames *projected_column_names = new ColumnNames;
