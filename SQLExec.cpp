@@ -89,91 +89,136 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
+QueryResult *SQLExec::insert(const InsertStatement *statement) {
+        Identifier tbn = statement->tableName;
+        DbRelation& table = SQLExec::tables->get_table(tbn);
 
-QueryResult* SQLExec::insert(const InsertStatement* statement) {
+        ColumnNames cln;
+        ColumnAttributes cla;
 
-	Identifier table_name = statement->tableName;
+        ValueDict row;
 
-	// get values from the statement
-	ColumnNames cns;
-	for (auto const& col_name : *statement->columns) {
-		cns.push_back(col_name);
-	}
+        unsigned int index = 0;
 
-	// get values from the statement
-	std::cout << "getting values" << endl;
-	std::vector<Value> values;
-	for (auto const& value_expr : *statement->values) {
-		switch (value_expr->type) {
-		case kExprLiteralString:
-			values.push_back(Value(value_expr->name));
-			break;
-		case kExprLiteralInt:
-			values.push_back(Value(value_expr->ival));
-			break;
-		default:
-			cout << "column value not supported except INT and STRING" << endl;
-			break;
-		}
-	}
+        if(statement->columns != nullptr){
+                for (auto const column : *statement->columns){
+                        cln.push_back(column);
+                }
+        }
+        else{
+                for (auto const column: table.get_column_names()){
+                    cln.push_back(column);
+                }
+        }
 
-	
-	// construct a row to insert into the table
-	std::cout << "construct row" << endl;
-	ValueDict row;
-	Identifier column_name;
-	Value column_value;
+        for (auto const& column : *statement->values){
+            switch(column->type){
+                 case kExprLiteralString:
+                        row[cln[index]] = Value(column->name);
+                        index++;
+                         break;
+                case kExprLiteralInt:
+                        row[cln[index]] = Value(column->ival);
+                         index++;
+                         break;
+                  default:
+                         throw SQLExecError("Insert type is not implemented");
+             }
+        }
 
-	for (size_t i = 0; i < statement->columns->size(); i++) {
-		column_name = cns.at(i);
-		column_value = values.at(i);
-		row[column_name] = column_value;
-	}
+        Handle insert_handle = table.insert(&row);
+        IndexNames idxn = SQLExec::indices->get_index_names(tbn);
+        for(Identifier name : idxn){
+            DbIndex& index = SQLExec::indices->get_index(tbn, name);
+            index.insert(insert_handle);
+    }
 
-	// get the table
-	DbRelation& table = SQLExec::tables->get_table(table_name);
-
-	// insert the row into the table
-	table.insert(&row);
-
-	// get the number of index
-	std::cout << "getting index" << endl;
-	Handle insert_handle = table.insert(&row);
-	IndexNames idxn = SQLExec::indices->get_index_names(table_name);
-	for(Identifier name : idxn){
-		DbIndex& idx = SQLExec::indices->get_index(table_name, name);
-		idx.insert(insert_handle);
-
-	}
-	return new QueryResult("successfully inserted 1 row into " + table_name + " and " + to_string(idxn.size()) + " indices");  // FIXME
+    return new QueryResult("Successfully inserted 1 row into " + tbn + " and " + to_string(idxn.size()) + " indices");
 }
 
-/*
+ValueDict *get_where_conjuncion(const Expr *expr, const ColumnNames *col_names) {
+    if (expr->type != kExprOperator) {
+        throw DbRelationError("Operator is not supported");
+    }
+    ValueDict *res = new ValueDict;
+    switch (expr->opType) {
+        case Expr::AND: {
+            ValueDict *rows = get_where_conjuncion(expr->expr, col_names);
+            if (res != nullptr) {
+                res->insert(rows->begin(), rows->end());
+            }
+            rows = get_where_conjuncion(expr->expr2, col_names);
+            res->insert(rows->begin(), rows->end());
+            break;
+        }
+        case Expr::SIMPLE_OP: {
+            if (expr->opChar != '=') {
+                throw DbRelationError("Only equality predicates supported so far");
+            }
+            Identifier col = expr->expr->name;
+            if (find(col_names->begin(), col_names->end(), col) == col_names->end()) {
+                throw DbRelationError(col + " doesn't exist");
+            }
+            if (expr->expr2->type == kExprLiteralString) {
+                res->insert(pair<Identifier, Value>(col, Value(expr->expr2->name)));
+            } else if (expr->expr2->type == kExprLiteralInt) {
+                res->insert(pair<Identifier, Value>(col, Value(expr->expr2->ival)));
+            } else {
+                throw DbRelationError("Unsupported type");
+            }
+            break;
+        }
+        default:
+            throw DbRelationError("only and predicate is supported so far");
+    }
+
+    return res;
+}
+
 QueryResult* SQLExec::del(const DeleteStatement* statement) {
 	Identifier table_name = statement->tableName;
 
 	// get the table
 	DbRelation& table = SQLExec::tables->get_table(table_name);
-
+     
 	// tablescan
 	EvalPlan* plan = new EvalPlan(table);
 
-	// enclose that in a select if we have a where clause
-	ValueDict row = get_where_conjunction(statement->expr);
-	cout << "final row size: " << row.size() << endl;
-	for (auto& t : row) {
-		cout << t.first << endl;
-		cout << t.second.n << endl;
-		cout << t.second.s << endl;
-	}
+    ColumnNames column_names;
+    for (auto const column : table.get_column_names()) {
+        column_names.push_back(column);
+    }
 
+    ValueDict *where = new ValueDict;
+    if (statement->expr != NULL) {
+        where = get_where_conjuncion(statement->expr, &column_names);
+    }
 
 	return new QueryResult("DELETE statement not yet implemented");  // FIXME
 }
-*/
 ValueDict *get_where_conjuncion(const Expr *expr) {
     ValueDict *ret = new ValueDict;
     return ret;
+    plan = new EvalPlan(where, plan);
+    EvalPlan *optimized_plan = plan->optimize();
+    EvalPipeline pipeline = optimized_plan->pipeline();
+    Handles *handles = pipeline.second;
+
+    auto index_names = indices->get_index_names(table_name);
+    unsigned int handle_size = handles->size();
+    unsigned int index_size = index_names.size();
+    for (auto const &handle : *handles) {
+        for (unsigned int i = 0; i < index_names.size(); i++) {
+            DbIndex &index = indices->get_index(table_name,index_names[i]);
+            index.del(handle);
+        }
+    }
+
+    for (auto const& handle : *handles) {
+        table.del(handle);
+    }
+    delete where;
+    return new QueryResult("deleted " + to_string(handle_size) + " rows and " + to_string(index_size) + " indices from " + table_name);
 }
 
 QueryResult *SQLExec::select(const SelectStatement *statement) {
@@ -189,8 +234,13 @@ QueryResult *SQLExec::select(const SelectStatement *statement) {
 
     }
 
+    ColumnNames column_names;
+
+    for (auto const column: table.get_column_names()){
+        column_names.push_back(column);
+    }
     if (statement->whereClause != nullptr) {
-        plan = new EvalPlan(get_where_conjuncion(statement->whereClause), plan);
+        plan = new EvalPlan(get_where_conjuncion(statement->whereClause, &column_names), plan);
     }
 
     ColumnNames *projected_column_names = new ColumnNames;
