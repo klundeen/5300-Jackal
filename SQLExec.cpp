@@ -1,9 +1,6 @@
 /**
  * @file SQLExec.cpp - implementation of SQLExec class
  * @author Kevin Lundeen
- * @author Hailey Dice
- * @author Lili Hao
- * @author Tong Xu
  * @see "Seattle University, CPSC5300, Spring 2021"
  */
 #include "SQLExec.h"
@@ -62,6 +59,36 @@ QueryResult::~QueryResult() {
     }
 }
 
+
+QueryResult *SQLExec::execute(const SQLStatement *statement) {
+    // initialize _tables table, if not yet present
+    if (SQLExec::tables == nullptr) {
+        SQLExec::tables = new Tables();
+        SQLExec::indices = new Indices();
+    }
+
+    try {
+        switch (statement->type()) {
+            case kStmtCreate:
+                return create((const CreateStatement *) statement);
+            case kStmtDrop:
+                return drop((const DropStatement *) statement);
+            case kStmtShow:
+                return show((const ShowStatement *) statement);
+            case kStmtInsert:
+                return insert((const InsertStatement *) statement);
+            case kStmtDelete:
+                return del((const DeleteStatement *) statement);
+            case kStmtSelect:
+                return select((const SelectStatement *) statement);
+            default:
+                return new QueryResult("not implemented");
+        }
+    } catch (DbRelationError &e) {
+        throw SQLExecError(string("DbRelationError: ") + e.what());
+    }
+}
+
 ValueDict* SQLExec::get_where_conjunction(const hsql::Expr *expr, const ColumnNames *col_names) {
     if(expr->type != kExprOperator)
         throw DbRelationError("Operator is not supported");
@@ -97,35 +124,6 @@ ValueDict* SQLExec::get_where_conjunction(const hsql::Expr *expr, const ColumnNa
     return rows;
 }
 
-            
-QueryResult *SQLExec::execute(const SQLStatement *statement) {
-    // initialize _tables table, if not yet present
-    if (SQLExec::tables == nullptr) {
-        SQLExec::tables = new Tables();
-        SQLExec::indices = new Indices();
-    }
-
-    try {
-        switch (statement->type()) {
-            case kStmtCreate:
-                return create((const CreateStatement *) statement);
-            case kStmtDrop:
-                return drop((const DropStatement *) statement);
-            case kStmtShow:
-                return show((const ShowStatement *) statement);
-            case kStmtInsert:
-                return insert((const InsertStatement *) statement);
-            case kStmtDelete:
-                return del((const DeleteStatement *) statement);
-            case kStmtSelect:
-                return select((const SelectStatement *) statement);
-            default:
-                return new QueryResult("not implemented");
-        }
-    } catch (DbRelationError &e) {
-        throw SQLExecError(string("DbRelationError: ") + e.what());
-    }
-}
 
 QueryResult *SQLExec::insert(const InsertStatement *statement) {
     Identifier tbn = statement->tableName;
@@ -172,6 +170,7 @@ QueryResult *SQLExec::insert(const InsertStatement *statement) {
     }
     
     return new QueryResult("Successfully inserted 1 row into " + tbn + " and " + to_string(idxn.size()) + " indices");
+    
 }
 
 QueryResult *SQLExec::del(const DeleteStatement *statement) {
@@ -179,7 +178,7 @@ QueryResult *SQLExec::del(const DeleteStatement *statement) {
     
     // get the table
     DbRelation &table = SQLExec::tables->get_table(table_name);
-
+    
     // get the column names of the table
     ColumnNames cns;
     for (auto const column: table.get_column_names()){
@@ -224,7 +223,7 @@ QueryResult *SQLExec::del(const DeleteStatement *statement) {
     for (auto const& handle: *handles){
         table.del(handle);
     }
-
+    
     return new QueryResult("successfully deleted " + to_string(handle_size)
                            + " rows from " + table_name + " and " + to_string(index_size) + " indices");
     
@@ -248,10 +247,10 @@ QueryResult *SQLExec::select(const SelectStatement *statement) {
     //enclose that in a select if we have a where clause
     if(statement->whereClause != nullptr)
         plan = new EvalPlan(get_where_conjunction(statement->whereClause, &cns), plan);
-
+    
     ColumnNames* column_names = new ColumnNames;
     ColumnAttributes * column_attributes = new ColumnAttributes;
-    
+        
     //Wrap the whole thing in either ProjectAll or Project
     switch (statement->selectList->front()->type) {
         case kExprStar: {
@@ -280,6 +279,7 @@ QueryResult *SQLExec::select(const SelectStatement *statement) {
     
     return new QueryResult(column_names, column_attributes, rows,
                            "successfuly returned " + to_string(n) + " rows");
+    
 }
 
 void
@@ -521,8 +521,7 @@ QueryResult *SQLExec::show_index(const ShowStatement *statement) {
         rows->push_back(row);
     }
     delete handles;
-    return new QueryResult(column_names, column_attributes, rows,
-                           "successfully returned " + to_string(n) + " rows");
+    return new QueryResult(column_names, column_attributes, rows, "successfully returned " + to_string(n) + " rows");
 }
 
 QueryResult *SQLExec::show_tables() {
