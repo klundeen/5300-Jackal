@@ -15,6 +15,7 @@ $ ./sql5300 ~/cpsc5300/data
 - <code>Milestone4_prep</code> has the instructor-provided files for Milestone4 (this was all actually in Milestone3, too, by mistake).
 - <code>Milestone4</code> has the instructor's attempt to complete the Milestone 4 assignment.
 - <code>Milestone5_prep</code> has the instructor-provided files for Milestone5.
+- <code>Milestone6</code> is the final milestone
 ## Unit Tests
 There are some tests for SlottedPage and HeapTable. They can be invoked from the <code>SQL</code> prompt:
 ```sql
